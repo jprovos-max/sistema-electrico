@@ -1413,133 +1413,142 @@ function initAnalisis(){
 function renderAnalisis(){
   const desde = gv('an-desde'), hasta = gv('an-hasta');
   const empty = g('an-empty'), body = g('an-body');
-  const lista = [...lecturas]
-    .filter(l => (!desde || l.fecha >= desde) && (!hasta || l.fecha <= hasta))
-    .sort((a,b) => a.fecha.localeCompare(b.fecha));
 
-  if(!lista.length){ empty.style.display='block'; body.style.display='none'; return; }
+  // Lista filtrada por rango de fechas — necesita al menos el punto anterior al rango
+  const todas = [...lecturas].sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  const lista = todas.filter(l => (!desde || l.fecha >= desde) && (!hasta || l.fecha <= hasta));
+
+  if(lista.length < 2){ empty.style.display='block'; body.style.display='none'; return; }
   empty.style.display='none'; body.style.display='block';
 
-  // Últimos 15 para gráficos
-  const ult15 = [...lecturas].sort((a,b)=>a.fecha.localeCompare(b.fecha)).slice(-15);
+  // INTERVALOS: cada punto = diferencia entre lectura i-1 e i
+  // Etiqueta del intervalo: "fecha_anterior → fecha_actual" en formato corto
+  const intervalos = lista.slice(1).map((l,i) => {
+    const prev = lista[i];
+    const label = prev.fecha.slice(5) + '→' + l.fecha.slice(5);
+    const difKwh  = Math.max(0, (l.kwh   - prev.kwh)   * FACTOR);
+    const difReac = Math.abs(l.kvarh - prev.kvarh);
+    const difHp   = Math.max(0, (l.hpKw||0) - (prev.hpKw||0)) * FACTOR;
+    const hpKwh   = Math.max(0, (l.hpKw||0) * FACTOR);
+    const prevHpKwh = Math.max(0, (prev.hpKw||0) * FACTOR);
+    const peakAlert = prevHpKwh > 0 && hpKwh > prevHpKwh * 1.1;
+    return { label, fechaFin:l.fecha, fechaIni:prev.fecha, difKwh, difReac, difHp, hpKwh, prevHpKwh, peakAlert,
+             kwh:l.kwh, kvarh:l.kvarh, hpKw:l.hpKw||0 };
+  });
 
-  // Consumo total período = (último kWh - primer kWh) * 150
-  const primerKwh = lista[0].kwh, ultimoKwh = lista[lista.length-1].kwh;
-  const consumoTotal = (ultimoKwh - primerKwh) * FACTOR;
+  // Últimos 15 intervalos para gráficos
+  const ult15int = intervalos.slice(-15);
 
-  // Diferencias diarias
-  const diffs = lista.slice(1).map((l,i) => ({
-    fecha: l.fecha,
-    kwh: l.kwh,
-    kvarh: l.kvarh,
-    bdKw: l.bdKw || 0,
-    difKwh: (l.kwh - lista[i].kwh) * FACTOR,
-    difReac: Math.abs(l.kvarh - lista[i].kvarh),
-    difBd: ((l.bdKw||0) - (lista[i].bdKw||0)) * FACTOR,
-    bdKwh: (l.bdKw||0) * FACTOR,
-    prevBdKwh: (lista[i].bdKw||0) * FACTOR,
-  }));
+  // Métricas del período seleccionado
+  const consumoTotal = intervalos.reduce((s,d)=>s+d.difKwh,0);
+  const maxReac = intervalos.length ? Math.max(...intervalos.map(d=>d.difReac)) : 0;
+  const avgReac = intervalos.length ? intervalos.reduce((s,d)=>s+d.difReac,0)/intervalos.length : 0;
+  const alertasPeak = intervalos.filter(d=>d.peakAlert);
+  const criticos = intervalos.filter(d=>d.difReac > 0.5);
+  const alertas  = intervalos.filter(d=>d.difReac >= 0.3 && d.difReac <= 0.5);
 
-  const maxReac = diffs.length ? Math.max(...diffs.map(d=>d.difReac)) : 0;
-  const avgReac = diffs.length ? diffs.reduce((s,d)=>s+d.difReac,0)/diffs.length : 0;
-  const alertasBd = diffs.filter(d => d.prevBdKwh > 0 && d.bdKwh > d.prevBdKwh * 1.1);
-  const criticos = diffs.filter(d => d.difReac > 0.5);
-  const alertas = diffs.filter(d => d.difReac >= 0.3 && d.difReac <= 0.5);
-
-  // Métricas
   g('an-metrics').innerHTML = `
     <div class="metric"><div class="metric-label">Consumo total período</div><div class="metric-val">${fmt(Math.round(consumoTotal))}</div><div class="metric-unit">kWh (×150)</div></div>
-    <div class="metric"><div class="metric-label">Registros analizados</div><div class="metric-val">${lista.length}</div><div class="metric-unit">lecturas</div></div>
-    <div class="metric"><div class="metric-label">Dif. reactiva promedio</div><div class="metric-val">${avgReac.toFixed(3)}</div><div class="metric-unit">kVArh/día</div></div>
-    <div class="metric"><div class="metric-label">Dif. reactiva máxima</div><div class="metric-val" style="color:${maxReac>0.5?'#c53030':maxReac>=0.3?'#b7791f':'#276749'}">${maxReac.toFixed(3)}</div><div class="metric-unit">kVArh</div></div>
-    <div class="metric"><div class="metric-label">Alertas peak BD</div><div class="metric-val" style="color:${alertasBd.length?'#c53030':'#276749'}">${alertasBd.length}</div><div class="metric-unit">días &gt;10%</div></div>`;
+    <div class="metric"><div class="metric-label">Intervalos analizados</div><div class="metric-val">${intervalos.length}</div><div class="metric-unit">puntos</div></div>
+    <div class="metric"><div class="metric-label">Reactiva prom. diaria</div><div class="metric-val">${avgReac.toFixed(3)}</div><div class="metric-unit">kVArh</div></div>
+    <div class="metric"><div class="metric-label">Reactiva máxima</div><div class="metric-val" style="color:${maxReac>0.5?'#c53030':maxReac>=0.3?'#b7791f':'#276749'}">${maxReac.toFixed(3)}</div><div class="metric-unit">kVArh</div></div>
+    <div class="metric"><div class="metric-label">Alertas peak HP</div><div class="metric-val" style="color:${alertasPeak.length?'#c53030':'#276749'}">${alertasPeak.length}</div><div class="metric-unit">intervalos &gt;10%</div></div>`;
 
   // Panel alertas
   let alHtml = '';
-  if(criticos.length) alHtml += `<div style="padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:6px;background:#fff5f5;color:#c53030;border:1px solid #fc8181">🔴 <strong>Crítico:</strong> ${criticos.length} día(s) con diferencia reactiva &gt;0.5 kVArh: ${criticos.map(d=>d.fecha).join(', ')}</div>`;
-  if(alertas.length) alHtml += `<div style="padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:6px;background:#fffbeb;color:#b7791f;border:1px solid #fbd38d">🟡 <strong>Alerta:</strong> ${alertas.length} día(s) con diferencia reactiva 0.3–0.5 kVArh: ${alertas.map(d=>d.fecha).join(', ')}</div>`;
-  if(alertasBd.length) alHtml += `<div style="padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:6px;background:#fff5f5;color:#c53030;border:1px solid #fc8181">⚡ <strong>Peak BD &gt;10%:</strong> ${alertasBd.map(d=>`${d.fecha} (${fmt(Math.round(d.bdKwh))} vs ${fmt(Math.round(d.prevBdKwh))} kWh)`).join(', ')}</div>`;
+  if(criticos.length) alHtml += `<div style="padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:6px;background:#fff5f5;color:#c53030;border:1px solid #fc8181">🔴 <strong>Crítico:</strong> ${criticos.length} intervalo(s) con reactiva &gt;0.5 kVArh: ${criticos.map(d=>d.label).join(' | ')}</div>`;
+  if(alertas.length)  alHtml += `<div style="padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:6px;background:#fffbeb;color:#b7791f;border:1px solid #fbd38d">🟡 <strong>Alerta:</strong> ${alertas.length} intervalo(s) con reactiva 0.3–0.5: ${alertas.map(d=>d.label).join(' | ')}</div>`;
+  if(alertasPeak.length) alHtml += `<div style="padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:6px;background:#fff5f5;color:#c53030;border:1px solid #fc8181">⚡ <strong>Peak HP &gt;10%:</strong> ${alertasPeak.map(d=>`${d.label} (${fmt(Math.round(d.hpKwh))} vs ${fmt(Math.round(d.prevHpKwh))} kWh)`).join(' | ')}</div>`;
   if(!alHtml) alHtml = `<div style="padding:8px 12px;border-radius:8px;font-size:12px;background:#f0fff4;color:#276749;border:1px solid #9ae6b4">🟢 Sin alertas en el período seleccionado.</div>`;
 
-  // Tendencia reactiva
-  if(diffs.length >= 3){
-    const ultTres = diffs.slice(-3);
-    if(ultTres.every((d,i,a)=>i===0||d.difReac>=a[i-1].difReac))
-      alHtml += `<div style="padding:8px 12px;border-radius:8px;font-size:12px;margin-top:6px;background:#fffbeb;color:#b7791f;border:1px solid #fbd38d">📈 <strong>Tendencia al alza:</strong> La diferencia reactiva ha subido 3 días consecutivos.</div>`;
+  // Tendencia reactiva (últimos 3 intervalos)
+  if(intervalos.length >= 3){
+    const ult3 = intervalos.slice(-3);
+    if(ult3.every((d,i,a)=>i===0||d.difReac>=a[i-1].difReac))
+      alHtml += `<div style="padding:8px 12px;border-radius:8px;font-size:12px;margin-top:6px;background:#fffbeb;color:#b7791f;border:1px solid #fbd38d">📈 <strong>Tendencia al alza:</strong> La reactiva ha aumentado en los últimos 3 intervalos consecutivos.</div>`;
   }
   g('an-alertas').innerHTML = alHtml;
 
-  // Gráfico consumo kWh diario (últimos 15)
-  const ult15diffs = [];
-  for(let i=1;i<ult15.length;i++){
-    ult15diffs.push({fecha:ult15[i].fecha, val:(ult15[i].kwh-ult15[i-1].kwh)*FACTOR});
-  }
+  // ── GRÁFICO 1: Consumo kWh por intervalo (últimos 15) ──
   dc('g-an-kwh');
-  if(ult15diffs.length && g('g-an-kwh')){
-    const lp1={id:'lp1',afterDatasetsDraw(chart){const ctx=chart.ctx;chart.getDatasetMeta(0).data.forEach((pt,i)=>{const v=ult15diffs[i].val;ctx.save();ctx.font='bold 9px Segoe UI';ctx.fillStyle='#2b6cb0';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(fmt(Math.round(v)),pt.x,pt.y-4);ctx.restore();});}};
+  if(ult15int.length && g('g-an-kwh')){
+    const lp1={id:'lp1',afterDatasetsDraw(chart){
+      const ctx=chart.ctx;
+      chart.getDatasetMeta(0).data.forEach((pt,i)=>{
+        const v=ult15int[i].difKwh;if(!v)return;
+        ctx.save();ctx.font='bold 9px Segoe UI';ctx.fillStyle='#2b6cb0';
+        ctx.textAlign='center';ctx.textBaseline='bottom';
+        ctx.fillText(fmt(Math.round(v)),pt.x,pt.y-4);ctx.restore();
+      });
+    }};
     ch['g-an-kwh']=new Chart(g('g-an-kwh').getContext('2d'),{type:'bar',
-      data:{labels:ult15diffs.map(d=>d.fecha.slice(5)),
-        datasets:[{data:ult15diffs.map(d=>Math.max(0,Math.round(d.val))),backgroundColor:'#2b6cb0',borderRadius:4}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
-        scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#718096',font:{size:10}},title:{display:true,text:'kWh',color:'#718096',font:{size:10}}},
-        x:{grid:{display:false},ticks:{color:'#718096',font:{size:10}}}}},
+      data:{labels:ult15int.map(d=>d.label),
+        datasets:[{data:ult15int.map(d=>Math.round(d.difKwh)),backgroundColor:'#2b6cb0',borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{title:i=>'Intervalo: '+ult15int[i[0].dataIndex].label}}},
+        scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#718096',font:{size:10}},title:{display:true,text:'kWh (×150)',color:'#718096',font:{size:10}}},
+        x:{grid:{display:false},ticks:{color:'#718096',font:{size:9},maxRotation:45}}}},
       plugins:[lp1]});
   }
 
-  // Gráfico peak BD kWh (últimos 15)
-  const ult15bd = ult15.map((l,i)=>({fecha:l.fecha, bdKwh:(l.bdKw||0)*FACTOR, prev:i>0?(ult15[i-1].bdKw||0)*FACTOR:null}));
+  // ── GRÁFICO 2: Peak HP kWh por intervalo (últimos 15) ──
   dc('g-an-bd');
-  if(ult15bd.length && g('g-an-bd')){
-    const colors = ult15bd.map((d,i)=> i>0 && d.prev>0 && d.bdKwh > d.prev*1.1 ? '#c53030' : '#2b6cb0');
-    const lp2={id:'lp2',afterDatasetsDraw(chart){const ctx=chart.ctx;chart.getDatasetMeta(0).data.forEach((pt,i)=>{const v=ult15bd[i].bdKwh;if(!v)return;ctx.save();ctx.font='bold 9px Segoe UI';ctx.fillStyle=colors[i];ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(fmt(Math.round(v)),pt.x,pt.y-4);ctx.restore();});}};
+  if(ult15int.length && g('g-an-bd')){
+    const hpColors = ult15int.map(d=>d.peakAlert?'#c53030':'#2b6cb0');
+    const lp2={id:'lp2',afterDatasetsDraw(chart){
+      const ctx=chart.ctx;
+      chart.getDatasetMeta(0).data.forEach((pt,i)=>{
+        const v=ult15int[i].hpKwh;if(!v)return;
+        ctx.save();ctx.font='bold 9px Segoe UI';ctx.fillStyle=hpColors[i];
+        ctx.textAlign='center';ctx.textBaseline='bottom';
+        ctx.fillText(fmt(Math.round(v)),pt.x,pt.y-4);ctx.restore();
+      });
+    }};
     ch['g-an-bd']=new Chart(g('g-an-bd').getContext('2d'),{type:'bar',
-      data:{labels:ult15bd.map(d=>d.fecha.slice(5)),
-        datasets:[{data:ult15bd.map(d=>Math.round(d.bdKwh)),backgroundColor:colors,borderRadius:4}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      data:{labels:ult15int.map(d=>d.label),
+        datasets:[{data:ult15int.map(d=>Math.round(d.hpKwh)),backgroundColor:hpColors,borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{title:i=>'Intervalo: '+ult15int[i[0].dataIndex].label}}},
         scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#718096',font:{size:10}},title:{display:true,text:'kWh (×150)',color:'#718096',font:{size:10}}},
-        x:{grid:{display:false},ticks:{color:'#718096',font:{size:10}}}}},
+        x:{grid:{display:false},ticks:{color:'#718096',font:{size:9},maxRotation:45}}}},
       plugins:[lp2]});
   }
 
-  // Gráfico reactiva diaria
-  const reacDiffs = ult15.slice(1).map((l,i)=>({fecha:l.fecha, val:Math.abs(l.kvarh-(ult15[i].kvarh||0))}));
+  // ── GRÁFICO 3: Reactiva por intervalo (últimos 15) ──
   dc('g-an-reac');
-  if(reacDiffs.length && g('g-an-reac')){
-    const rColors = reacDiffs.map(d=>d.val>0.5?'#c53030':d.val>=0.3?'#b7791f':'#276749');
+  if(ult15int.length && g('g-an-reac')){
+    const rColors = ult15int.map(d=>d.difReac>0.5?'#c53030':d.difReac>=0.3?'#b7791f':'#276749');
     ch['g-an-reac']=new Chart(g('g-an-reac').getContext('2d'),{type:'bar',
-      data:{labels:reacDiffs.map(d=>d.fecha.slice(5)),
+      data:{labels:ult15int.map(d=>d.label),
         datasets:[
-          {data:reacDiffs.map(d=>+d.val.toFixed(3)),backgroundColor:rColors,borderRadius:4},
-          {type:'line',data:reacDiffs.map(()=>0.33),borderColor:'#b7791f',borderDash:[4,3],pointRadius:0,borderWidth:1.5},
-          {type:'line',data:reacDiffs.map(()=>0.5),borderColor:'#c53030',borderDash:[4,3],pointRadius:0,borderWidth:1.5}
+          {data:ult15int.map(d=>+d.difReac.toFixed(3)),backgroundColor:rColors,borderRadius:4,order:1},
+          {type:'line',data:ult15int.map(()=>0.33),borderColor:'#b7791f',borderDash:[4,3],pointRadius:0,borderWidth:1.5,order:2},
+          {type:'line',data:ult15int.map(()=>0.5),borderColor:'#c53030',borderDash:[4,3],pointRadius:0,borderWidth:1.5,order:3}
         ]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{title:i=>'Intervalo: '+ult15int[i[0].dataIndex].label}}},
         scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#718096',font:{size:10}},title:{display:true,text:'kVArh',color:'#718096',font:{size:10}}},
-        x:{grid:{display:false},ticks:{color:'#718096',font:{size:10}}}}}}); 
+        x:{grid:{display:false},ticks:{color:'#718096',font:{size:9},maxRotation:45}}}}});
   }
 
-  // Tabla detalle
-  const semaforo = v => v>0.5?'<span style="color:#c53030;font-weight:700">🔴 Crítico</span>':v>=0.3?'<span style="color:#b7791f;font-weight:700">🟡 Alerta</span>':'<span style="color:#276749;font-weight:700">🟢 Normal</span>';
-  g('an-tbody').innerHTML = lista.map((l,i)=>{
-    if(i===0) return `<tr><td style="font-weight:600">${l.fecha}</td><td>${fmt(l.kwh)}</td><td>—</td><td>${fmt(l.kvarh)}</td><td>—</td><td>—</td><td>${(l.bdKw||0).toFixed(4)}</td><td>—</td><td>—</td></tr>`;
-    const prev = lista[i-1];
-    const difKwh = (l.kwh - prev.kwh)*FACTOR;
-    const difReac = Math.abs(l.kvarh - prev.kvarh);
-    const bdKwh = (l.bdKw||0)*FACTOR;
-    const prevBdKwh = (prev.bdKw||0)*FACTOR;
-    const peakAlert = prevBdKwh>0 && bdKwh>prevBdKwh*1.1;
-    return `<tr>
-      <td style="font-weight:600">${l.fecha}</td>
-      <td>${fmt(l.kwh)}</td>
-      <td style="font-weight:600;color:#2b6cb0">${fmt(Math.round(difKwh))}</td>
-      <td>${fmt(l.kvarh)}</td>
-      <td style="font-weight:600;color:${difReac>0.5?'#c53030':difReac>=0.3?'#b7791f':'#276749'}">${difReac.toFixed(3)}</td>
-      <td>${semaforo(difReac)}</td>
-      <td>${(l.bdKw||0).toFixed(4)}</td>
-      <td style="font-weight:600;color:${peakAlert?'#c53030':'#1a202c'}">${fmt(Math.round(bdKwh))}</td>
-      <td>${peakAlert?'<span style="color:#c53030;font-weight:700">⚡ +10%</span>':'—'}</td>
-    </tr>`;
-  }).join('');
+  // ── TABLA DETALLE ──
+  const sem = v => v>0.5?'<span style="color:#c53030;font-weight:700">🔴 Crítico</span>':v>=0.3?'<span style="color:#b7791f;font-weight:700">🟡 Alerta</span>':'<span style="color:#276749;font-weight:700">🟢 Normal</span>';
+  // Primera fila: punto inicial sin intervalo
+  const primeraFila = `<tr style="background:#f7fafc">
+    <td style="font-weight:600;color:#718096">${lista[0].fecha}</td>
+    <td colspan="8" style="color:#a0aec0;font-size:11px;text-align:left;padding-left:10px">Punto de inicio del período — sin intervalo anterior</td>
+  </tr>`;
+
+  const filas = intervalos.map(d => `<tr>
+    <td style="font-weight:700;font-size:11px;color:#276749">${d.label}</td>
+    <td>${fmt(d.kwh)}</td>
+    <td style="font-weight:700;color:#2b6cb0">${fmt(Math.round(d.difKwh))} kWh</td>
+    <td>${fmt(d.kvarh)}</td>
+    <td style="font-weight:700;color:${d.difReac>0.5?'#c53030':d.difReac>=0.3?'#b7791f':'#276749'}">${d.difReac.toFixed(3)}</td>
+    <td>${sem(d.difReac)}</td>
+    <td>${d.hpKw.toFixed(4)}</td>
+    <td style="font-weight:700;color:${d.peakAlert?'#c53030':'#1a202c'}">${fmt(Math.round(d.hpKwh))} kWh</td>
+    <td>${d.peakAlert?'<span style="color:#c53030;font-weight:700">⚡ +10%</span>':'—'}</td>
+  </tr>`).join('');
+
+  g('an-tbody').innerHTML = primeraFila + filas;
 }
 
 // ── PROYECCIÓN HP ARRASTRE ────────────────────────────────────────────────────
