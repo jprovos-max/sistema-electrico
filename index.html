@@ -161,11 +161,13 @@ input[readonly]{background:#f7fafc;color:#718096}
     <div style="display:flex;align-items:center;gap:8px">
       <span id="op-user" style="font-size:11px;color:rgba(255,255,255,.9);font-weight:600"></span>
       <span id="op-sync" class="sync-indicator sync-ok">● Sincronizado</span>
-      <button class="btn btn-sm" onclick="cerrarSesion()" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)">Salir</button>
+      <button class="btn btn-sm" onclick="volverMenu()" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)">← Menú</button>
+      <button class="btn btn-sm" onclick="cerrarSesion()" style="background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.2)">Salir</button>
     </div>
   </div>
   <div class="tabs">
     <button class="tab active" onclick="opTab('nueva')">Nueva lectura</button>
+    <button class="tab" onclick="opTab('excel')">Cargar Excel</button>
     <button class="tab" onclick="opTab('historial')">Mi historial</button>
   </div>
 
@@ -238,6 +240,58 @@ input[readonly]{background:#f7fafc;color:#718096}
     </div>
   </div>
 
+
+  <div id="op-excel" class="subsec">
+    <div class="card">
+      <div class="card-title">Cargar planilla Excel del medidor</div>
+      <div class="card-sub">
+        Arrastre o seleccione el archivo Excel con las lecturas del medidor Vetron. 
+        La app detecta automáticamente el formato de la planilla y solo agrega las filas 
+        <strong>nuevas</strong> que no estén ya registradas (compara por fecha).
+      </div>
+      <div class="drop-zone" id="xl-dz" 
+        onclick="document.getElementById('xl-inp').click()" 
+        ondragover="xlOver(event)" ondragleave="xlLeave()" ondrop="xlDrop(event)">
+        <svg style="width:36px;height:36px;opacity:.4;display:block;margin:0 auto 8px" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="4" y="4" width="40" height="40" rx="4"/>
+          <path d="M14 16h20M14 24h20M14 32h12"/>
+          <path d="M30 28l8 8M38 28l-8 8" stroke-width="2"/>
+        </svg>
+        <p style="font-size:13px;color:#718096;margin-bottom:4px;font-weight:500">Arrastre el Excel aquí</p>
+        <span style="font-size:11px;color:#a0aec0">o haga clic para buscar — acepta .xlsx y .xls</span>
+      </div>
+      <input type="file" id="xl-inp" accept=".xlsx,.xls" style="display:none" onchange="handleExcel(this.files[0])"/>
+      <div id="xl-status" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card" id="xl-preview" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+        <div class="card-title" style="margin:0" id="xl-title">Filas detectadas</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span id="xl-badge" class="badge b-blue"></span>
+          <button class="btn btn-p" onclick="subirExcel()">Subir a Google Sheets</button>
+        </div>
+      </div>
+      <div id="xl-summary" style="margin-bottom:10px"></div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr>
+            <th>Fecha</th><th>Hora real</th><th>Hora med</th>
+            <th>kWh medidor</th><th>Consumo kWh (×150)</th>
+            <th>kVArh</th><th>BD kW</th><th>BD kWh (×150)</th>
+            <th>HP kW</th><th>HP kWh (×150)</th>
+            <th>Cód reset</th><th>Estado</th>
+          </tr></thead>
+          <tbody id="xl-tbody"></tbody>
+        </table>
+      </div>
+      <div class="btn-row" style="margin-top:10px">
+        <button class="btn btn-p" onclick="subirExcel()" id="xl-btn-subir">Subir filas nuevas a Google Sheets</button>
+        <button class="btn" onclick="clearExcel()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
   <div id="op-historial" class="subsec">
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
@@ -272,7 +326,8 @@ input[readonly]{background:#f7fafc;color:#718096}
     <div style="display:flex;align-items:center;gap:8px">
       <span id="adm-user" style="font-size:11px;color:rgba(255,255,255,.9);font-weight:600"></span>
       <span id="adm-sync" class="sync-indicator sync-ok">● Sincronizado</span>
-      <button class="btn btn-sm" onclick="cerrarSesion()" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)">Salir</button>
+      <button class="btn btn-sm" onclick="volverMenu()" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)">← Menú</button>
+      <button class="btn btn-sm" onclick="cerrarSesion()" style="background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.2)">Salir</button>
     </div>
   </div>
   <div class="tabs">
@@ -579,7 +634,8 @@ input[readonly]{background:#f7fafc;color:#718096}
     <div style="display:flex;align-items:center;gap:8px">
       <span id="vis-user" style="font-size:11px;color:rgba(255,255,255,.9);font-weight:600"></span>
       <span id="vis-sync" class="sync-indicator sync-ok">● Sincronizado</span>
-      <button class="btn btn-sm" onclick="cerrarSesion()" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)">Salir</button>
+      <button class="btn btn-sm" onclick="volverMenu()" style="background:rgba(0,0,0,.1);color:#333;border-color:rgba(0,0,0,.15)">← Menú</button>
+      <button class="btn btn-sm" onclick="cerrarSesion()" style="background:rgba(0,0,0,.07);color:#555;border-color:rgba(0,0,0,.1)">Salir</button>
     </div>
   </div>
   <div class="tabs">
@@ -734,6 +790,17 @@ async function entrar(perfil,nombre){
   if(perfil==='vis'){visTab('resumen');renderVis();}
 }
 
+function volverMenu(){
+  // Volver al menú de selección de perfil sin cerrar sesión Google
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  g('screen-login').classList.add('active');
+  // Mostrar perfiles si ya hay sesión activa
+  if(userEmail){
+    g('login-btn-wrap').style.display='none';
+    g('login-perfil').style.display='block';
+  }
+}
+
 function cerrarSesion(){
   userPerfil='';userName='';accessToken=null;userEmail='';
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -829,10 +896,11 @@ async function cargarFacturas(){
 
 // ── TABS ──────────────────────────────────────────────────────────────────────
 function opTab(t){
-  g('screen-op').querySelectorAll('.tab').forEach((x,i)=>x.classList.toggle('active',['nueva','historial'][i]===t));
+  g('screen-op').querySelectorAll('.tab').forEach((x,i)=>x.classList.toggle('active',['nueva','excel','historial'][i]===t));
   g('screen-op').querySelectorAll('.subsec').forEach(x=>x.classList.remove('active'));
   g('op-'+t).classList.add('active');
   if(t==='historial')renderOpHist();
+  if(t==='excel')clearExcel();
 }
 function admTab(t){
   g('screen-adm').querySelectorAll('.tab').forEach((x,i)=>x.classList.toggle('active',['carga','facturas','costo','lecturas','graficos','analisis','proyeccion'][i]===t));
@@ -1540,6 +1608,230 @@ function renderProy(){
     <td style="color:${d>10?'#c53030':d<-5?'#276749':'#1a202c'}">${d>=0?'+':''}${d.toFixed(1)}%</td>
     <td>${badge(p.val)}</td>
   </tr>`;}).join('');
+}
+
+
+// ── CARGA EXCEL OPERADOR ──────────────────────────────────────────────────────
+let xlFilas = []; // filas leídas del Excel
+let xlNuevas = []; // filas que no existen aún en Sheets
+
+function xlOver(e){e.preventDefault();g('xl-dz').classList.add('over');}
+function xlLeave(){g('xl-dz').classList.remove('over');}
+function xlDrop(e){e.preventDefault();xlLeave();const f=e.dataTransfer.files[0];if(f)handleExcel(f);else alert('Seleccione un archivo Excel.');}
+
+function clearExcel(){
+  xlFilas=[];xlNuevas=[];
+  if(g('xl-preview'))g('xl-preview').style.display='none';
+  if(g('xl-status'))g('xl-status').innerHTML='';
+  if(g('xl-inp'))g('xl-inp').value='';
+  if(g('xl-dz'))g('xl-dz').classList.remove('over');
+}
+
+async function handleExcel(file){
+  if(!file)return;
+  const ext=file.name.split('.').pop().toLowerCase();
+  if(!['xlsx','xls'].includes(ext)){alert('Solo se aceptan archivos .xlsx o .xls');return;}
+  g('xl-status').innerHTML='<div class="alert-info">Leyendo Excel...</div>';
+
+  try{
+    // Usar SheetJS via CDN
+    if(!window.XLSX){
+      await new Promise((res,rej)=>{
+        const s=document.createElement('script');
+        s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+        s.onload=res;s.onerror=rej;document.head.appendChild(s);
+      });
+    }
+
+    const ab=await file.arrayBuffer();
+    const wb=XLSX.read(ab,{type:'array',cellDates:true});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+
+    // Detectar fila de encabezado — buscar la que tenga "Fecha" o "FECHA"
+    let headerRow=-1;
+    for(let i=0;i<Math.min(raw.length,10);i++){
+      const row=raw[i].map(c=>String(c).toLowerCase());
+      if(row.some(c=>c.includes('fecha') && c.includes('medi'))){headerRow=i;break;}
+    }
+    if(headerRow===-1){
+      // Si no encontramos encabezado exacto, buscar cualquier fila con "fecha"
+      for(let i=0;i<Math.min(raw.length,10);i++){
+        if(raw[i].some(c=>String(c).toLowerCase().includes('fecha'))){headerRow=i;break;}
+      }
+    }
+    if(headerRow===-1){g('xl-status').innerHTML='<div class="alert-warn">No se encontró el encabezado de la planilla. Verifique que sea el formato correcto.</div>';return;}
+
+    const headers=raw[headerRow].map(c=>String(c).toLowerCase().trim());
+    const dataRows=raw.slice(headerRow+1).filter(r=>r.some(c=>c!==''));
+
+    // Mapear columnas por nombre (flexible)
+    function findCol(keywords){
+      for(const kw of keywords){
+        const idx=headers.findIndex(h=>h.includes(kw));
+        if(idx>=0)return idx;
+      }
+      return -1;
+    }
+
+    const cols={
+      fecha:    findCol(['fecha med']),
+      horaReal: findCol(['hora real']),
+      horaMed:  findCol(['hora med','hora
+med']),
+      fechaMed: findCol(['fecha
+med','fecha med']),
+      kwh:      findCol(['kwh','energía [kwh]','energia']),
+      kvarh:    findCol(['kvarh','react','kvarh']),
+      bdKw:     findCol(['demanda bd','bd [kw]','bd
+']),
+      horaBd:   findCol(['hora dda bd','hora dda
+bd']),
+      fechaBd:  findCol(['fecha dda bd','fecha dda
+bd']),
+      hpKw:     findCol(['demanda hp','hp [kw]','hp
+']),
+      horaHp:   findCol(['hora dda hp','hora dda
+hp']),
+      fechaHp:  findCol(['fecha dda hp','fecha dda
+hp']),
+      codReset: findCol(['código reset','codigo reset','reset']),
+      horaReset:findCol(['hora reset']),
+      fechaReset:findCol(['fecha reset']),
+    };
+
+    // Si fecha no encontrada, tomar primera columna
+    if(cols.fecha<0)cols.fecha=0;
+    if(cols.kwh<0){
+      // buscar columna con números grandes (>1000)
+      for(let c=0;c<headers.length;c++){
+        const vals=dataRows.map(r=>parseFloat(r[c])||0).filter(v=>v>1000);
+        if(vals.length>dataRows.length*0.5){cols.kwh=c;break;}
+      }
+    }
+
+    // Parsear fecha desde Excel (puede venir como Date, string DD-MM-YY, etc.)
+    function parseFechaExcel(v){
+      if(!v)return'';
+      if(v instanceof Date){
+        const d=v;
+        return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      }
+      const s=String(v).trim();
+      // DD-MM-YY o DD-MM-YYYY o DD/MM/YY
+      const m=s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})$/);
+      if(m){
+        const dd=m[1].padStart(2,'0'),mm=m[2].padStart(2,'0');
+        let yy=m[3];if(yy.length===2)yy='20'+yy;
+        return`${yy}-${mm}-${dd}`;
+      }
+      return s;
+    }
+
+    function getVal(row,idx){return idx>=0&&idx<row.length?row[idx]:'';}
+    function getNum(row,idx){return idx>=0?parseFloat(row[idx])||0:0;}
+
+    xlFilas=dataRows.map(row=>({
+      fecha:    parseFechaExcel(getVal(row,cols.fecha)),
+      horaReal: String(getVal(row,cols.horaReal)||''),
+      horaMed:  String(getVal(row,cols.horaMed)||''),
+      fechaMed: parseFechaExcel(getVal(row,cols.fechaMed)),
+      kwh:      getNum(row,cols.kwh),
+      kvarh:    getNum(row,cols.kvarh),
+      bdKw:     getNum(row,cols.bdKw),
+      bdHora:   String(getVal(row,cols.horaBd)||''),
+      bdFecha:  parseFechaExcel(getVal(row,cols.fechaBd)),
+      hpKw:     getNum(row,cols.hpKw),
+      hpHora:   String(getVal(row,cols.horaHp)||''),
+      hpFecha:  parseFechaExcel(getVal(row,cols.fechaHp)),
+      resetCod: String(getVal(row,cols.codReset)||''),
+      resetHora:String(getVal(row,cols.horaReset)||''),
+      resetFecha:String(getVal(row,cols.fechaReset)||''),
+      oper:     userName,
+      obs:      '',
+      id:       ''
+    })).filter(r=>r.fecha&&r.kwh>0);
+
+    // Comparar con lo que ya está en Sheets (por fecha)
+    const fechasExistentes=new Set(lecturas.map(l=>l.fecha));
+    xlNuevas=xlFilas.filter(r=>!fechasExistentes.has(r.fecha));
+
+    // Mostrar preview
+    g('xl-status').innerHTML='';
+    g('xl-title').textContent=`${file.name} — ${xlFilas.length} registros detectados`;
+    g('xl-badge').textContent=`${xlNuevas.length} nuevos / ${xlFilas.length-xlNuevas.length} ya registrados`;
+    g('xl-badge').className='badge '+(xlNuevas.length>0?'b-green':'b-gray');
+
+    g('xl-summary').innerHTML=`
+      <div class="alert-${xlNuevas.length>0?'ok':'info'}" style="margin-bottom:0">
+        ${xlNuevas.length>0
+          ?`✓ Se agregarán <strong>${xlNuevas.length}</strong> filas nuevas a Google Sheets. ${xlFilas.length-xlNuevas.length} ya existen y serán ignoradas.`
+          :'Todas las filas de este Excel ya están registradas en Google Sheets. No hay nada nuevo que agregar.'}
+      </div>`;
+
+    g('xl-btn-subir').style.display=xlNuevas.length>0?'inline-block':'none';
+
+    // Renderizar tabla preview
+    g('xl-tbody').innerHTML=xlFilas.map((r,i,arr)=>{
+      const esNueva=!fechasExistentes.has(r.fecha);
+      const prev=i>0?arr[i-1]:null;
+      // Consumo kWh = diferencia con anterior × 150
+      const consumo=prev?Math.round((r.kwh-prev.kwh)*150):null;
+      // Peak HP alert: sube más de 10% respecto al anterior
+      const hpKwh=Math.round(r.hpKw*150);
+      const prevHpKwh=prev?Math.round(prev.hpKw*150):null;
+      const peakAlert=prevHpKwh&&prevHpKwh>0&&hpKwh>prevHpKwh*1.1;
+      const bdKwh=Math.round(r.bdKw*150);
+      return\`<tr style="\${esNueva?'':'opacity:.45'}">
+        <td style="font-weight:600;color:\${esNueva?'#276749':'#718096'}">\${r.fecha}\${esNueva?' <span style="font-size:9px;color:#276749">★</span>':''}</td>
+        <td>\${r.horaReal||'—'}</td><td>\${r.horaMed||'—'}</td>
+        <td style="color:#718096">\${fmt(r.kwh)}</td>
+        <td style="font-weight:700;color:#2b6cb0">\${consumo!==null?fmt(consumo)+'&nbsp;kWh':'—'}</td>
+        <td>\${fmt(r.kvarh)}</td>
+        <td>\${r.bdKw||'0'}</td>
+        <td>\${fmt(bdKwh)}</td>
+        <td style="color:\${peakAlert?'#c53030':'#1a202c'}">\${r.hpKw||'0'}</td>
+        <td style="font-weight:\${peakAlert?'700':'400'};color:\${peakAlert?'#c53030':'#1a202c'}">\${fmt(hpKwh)}\${peakAlert?' ⚡':''}</td>
+        <td>\${r.resetCod||'—'}</td>
+        <td>\${esNueva?'<span class="badge b-green">Nuevo</span>':'<span class="badge b-gray">Ya existe</span>'}</td>
+      </tr>\`;
+    }).join('');
+
+    g('xl-preview').style.display='block';
+
+  }catch(err){
+    console.error(err);
+    g('xl-status').innerHTML='<div class="alert-warn">Error al leer el Excel: '+err.message+'. Verifique que sea un archivo .xlsx válido.</div>';
+  }
+}
+
+async function subirExcel(){
+  if(!xlNuevas.length){alert('No hay filas nuevas para subir.');return;}
+  setSync('op-sync','ing','Subiendo '+xlNuevas.length+' filas...');
+  g('xl-btn-subir').disabled=true;
+  g('xl-btn-subir').textContent='Subiendo...';
+  let subidas=0,errores=0;
+  for(const r of xlNuevas){
+    const id=Date.now().toString()+'_'+Math.random().toString(36).slice(2,6);
+    const fila=[r.fecha,r.horaReal,r.horaMed,r.fechaMed,r.kwh,r.kvarh,
+      r.bdKw,r.bdHora,r.bdFecha,r.hpKw,r.hpHora,r.hpFecha,
+      r.resetCod,r.resetHora,r.resetFecha,r.oper||userName,r.obs,id];
+    const ok=await sheetAppend(SH_LEC,fila);
+    if(ok){
+      subidas++;
+      lecturas.push({...r,id});
+    }else errores++;
+    // Pequeña pausa para no saturar la API
+    await new Promise(res=>setTimeout(res,200));
+  }
+  setSync('op-sync',errores>0?'err':'ok',subidas+' filas subidas ✓');
+  g('xl-btn-subir').disabled=false;
+  g('xl-btn-subir').textContent='Subir filas nuevas a Google Sheets';
+  xlNuevas=[];
+  renderOpHist();
+  alert('✓ '+subidas+' filas nuevas subidas a Google Sheets.'+
+    (errores>0?' '+errores+' filas con error.':''));
+  if(!errores)clearExcel();
 }
 
 </script>
