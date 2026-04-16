@@ -1710,26 +1710,18 @@ async function handleExcel(file){
     }
 
     const cols={
-      fecha:    findCol(['fecha med']),
+      fecha:    findCol(['fecha med','fecha medicion','fecha medición']),
       horaReal: findCol(['hora real']),
-      horaMed:  findCol(['hora med','hora
-med']),
-      fechaMed: findCol(['fecha
-med','fecha med']),
-      kwh:      findCol(['kwh','energía [kwh]','energia']),
-      kvarh:    findCol(['kvarh','react','kvarh']),
-      bdKw:     findCol(['demanda bd','bd [kw]','bd
-']),
-      horaBd:   findCol(['hora dda bd','hora dda
-bd']),
-      fechaBd:  findCol(['fecha dda bd','fecha dda
-bd']),
-      hpKw:     findCol(['demanda hp','hp [kw]','hp
-']),
-      horaHp:   findCol(['hora dda hp','hora dda
-hp']),
-      fechaHp:  findCol(['fecha dda hp','fecha dda
-hp']),
+      horaMed:  findCol(['hora med','hora medidor']),
+      fechaMed: findCol(['fecha med','fecha medidor']),
+      kwh:      findCol(['kwh','energia','energía']),
+      kvarh:    findCol(['kvarh','react']),
+      bdKw:     findCol(['demanda bd','bd [kw]','bd']),
+      horaBd:   findCol(['hora dda bd','hora dda bd']),
+      fechaBd:  findCol(['fecha dda bd','fecha dda bd']),
+      hpKw:     findCol(['demanda hp','hp [kw]','hp']),
+      horaHp:   findCol(['hora dda hp','hora dda hp']),
+      fechaHp:  findCol(['fecha dda hp','fecha dda hp']),
       codReset: findCol(['código reset','codigo reset','reset']),
       horaReset:findCol(['hora reset']),
       fechaReset:findCol(['fecha reset']),
