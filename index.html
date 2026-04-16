@@ -281,6 +281,8 @@ input[readonly]{background:#f7fafc;color:#718096}
     <button class="tab" onclick="admTab('costo')">Costo kWh</button>
     <button class="tab" onclick="admTab('lecturas')">Lecturas operador</button>
     <button class="tab" onclick="admTab('graficos')">Gráficos</button>
+    <button class="tab" onclick="admTab('analisis')">Análisis operador</button>
+    <button class="tab" onclick="admTab('proyeccion')">Proyección arrastre</button>
   </div>
 
   <div id="adm-carga" class="subsec active">
@@ -460,6 +462,112 @@ input[readonly]{background:#f7fafc;color:#718096}
     </div>
   </div>
 </div>
+
+
+  <!-- ANÁLISIS OPERADOR -->
+  <div id="adm-analisis" class="subsec">
+    <div class="card">
+      <div class="card-title">Análisis de lecturas del operador</div>
+      <div class="card-sub">Seleccione un rango de fechas para calcular el consumo total, diferencias de energía reactiva y alertas de peak hora punta. Factor constante: <strong>150</strong>.</div>
+      <div class="g3" style="margin-bottom:10px">
+        <div class="fg"><label>Fecha inicio</label><input type="date" id="an-desde" onchange="renderAnalisis()"/></div>
+        <div class="fg"><label>Fecha fin</label><input type="date" id="an-hasta" onchange="renderAnalisis()"/></div>
+        <div class="fg" style="justify-content:flex-end;padding-top:18px">
+          <button class="btn btn-p btn-sm" onclick="renderAnalisis()">Calcular</button>
+        </div>
+      </div>
+    </div>
+    <div id="an-empty" class="empty" style="display:none">Sin lecturas para el período seleccionado.</div>
+    <div id="an-body" style="display:none">
+      <div class="metrics" id="an-metrics"></div>
+      <div id="an-alertas" style="margin-bottom:1rem"></div>
+      <div class="card">
+        <div class="card-title">Consumo diario (kWh) — últimos 15 días</div>
+        <div class="chart-wrap"><canvas id="g-an-kwh" role="img" aria-label="Consumo diario kWh"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Peak hora punta BD (kWh) — últimos 15 días</div>
+        <div class="chart-wrap"><canvas id="g-an-bd" role="img" aria-label="Peak hora punta kWh"></canvas></div>
+        <div class="legend">
+          <div class="legend-item"><span style="width:10px;height:10px;border-radius:50%;background:#2b6cb0;display:inline-block"></span><span>Normal</span></div>
+          <div class="legend-item"><span style="width:10px;height:10px;border-radius:50%;background:#c53030;display:inline-block"></span><span>Subida &gt;10% día anterior</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Diferencia energía reactiva diaria (kVArh)</div>
+        <div class="chart-wrap"><canvas id="g-an-reac" role="img" aria-label="Diferencia energía reactiva"></canvas></div>
+        <div class="legend">
+          <div class="legend-item"><span style="width:10px;height:10px;border-radius:50%;background:#276749;display:inline-block"></span><span>Normal &lt;0.3</span></div>
+          <div class="legend-item"><span style="width:10px;height:10px;border-radius:50%;background:#b7791f;display:inline-block"></span><span>Alerta 0.3–0.5</span></div>
+          <div class="legend-item"><span style="width:10px;height:10px;border-radius:50%;background:#c53030;display:inline-block"></span><span>Crítico &gt;0.5</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Detalle del período</div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr>
+              <th>Fecha</th><th>Energía kWh</th><th>Consumo kWh (×150)</th>
+              <th>kVArh</th><th>Dif. reactiva</th><th>Estado reactiva</th>
+              <th>BD kW</th><th>BD kWh (×150)</th><th>Peak BD</th>
+            </tr></thead>
+            <tbody id="an-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROYECCIÓN ARRASTRE -->
+  <div id="adm-proyeccion" class="subsec">
+    <div id="proy-empty" class="empty">Registre al menos 2 facturas para generar la proyección de arrastre.</div>
+    <div id="proy-body" style="display:none">
+      <div class="card">
+        <div class="card-sub">Proyección basada en regresión lineal + promedio móvil 3 períodos + factor estacional verano/invierno. Ajuste el escenario con el deslizador.</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="font-size:11px;color:#718096;min-width:70px">Optimista</span>
+          <input type="range" min="-1" max="1" step="0.1" value="0" id="esc-slider" oninput="updateEsc(this.value)" style="flex:1"/>
+          <span style="font-size:11px;color:#718096;min-width:60px;text-align:right">Pesimista</span>
+          <span style="font-size:12px;font-weight:600;min-width:80px;text-align:right;color:#1a202c" id="esc-lbl">Base</span>
+        </div>
+      </div>
+      <div class="metrics" id="proy-met"></div>
+      <div class="card">
+        <div class="card-title">Demanda HP — histórico + proyección 12 meses (kW)</div>
+        <div class="chart-wrap-lg"><canvas id="p-kw" role="img" aria-label="Proyección HP kW 12 meses"></canvas></div>
+        <div class="legend">
+          <div class="legend-item"><span style="width:10px;height:10px;border-radius:50%;background:#2b6cb0;display:inline-block"></span><span>Histórico real</span></div>
+          <div class="legend-item"><span style="width:18px;height:2px;border-top:2px dashed #c05621;display:inline-block"></span><span>Proyección</span></div>
+          <div class="legend-item"><span style="width:12px;height:10px;border-radius:3px;background:rgba(192,86,33,.15);display:inline-block"></span><span>Banda confianza</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Proyección costo hora punta ($) — cobro por arrastre estimado</div>
+        <div class="chart-wrap"><canvas id="p-clp" role="img" aria-label="Proyección costo HP CLP"></canvas></div>
+        <div class="legend">
+          <div class="legend-item"><span style="width:10px;height:10px;border-radius:50%;background:#2b6cb0;display:inline-block"></span><span>Histórico costo HP ($)</span></div>
+          <div class="legend-item"><span style="width:10px;height:10px;border-radius:50%;background:#c05621;display:inline-block"></span><span>Proyectado ($)</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Alertas y recomendaciones</div>
+        <div id="proy-insights"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Tabla de proyección mensual — próximos 12 meses</div>
+        <div style="overflow-x:auto">
+          <table class="costo-tbl">
+            <thead><tr>
+              <th style="text-align:left">Mes</th><th>HP proy. (kW)</th>
+              <th>Mín (kW)</th><th>Máx (kW)</th>
+              <th>Costo HP est. ($)</th><th>vs. prom. hist.</th><th>Riesgo</th>
+            </tr></thead>
+            <tbody id="proy-tbl"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
 
 <!-- VISUALIZADOR -->
 <div id="screen-vis" class="screen">
@@ -727,13 +835,15 @@ function opTab(t){
   if(t==='historial')renderOpHist();
 }
 function admTab(t){
-  g('screen-adm').querySelectorAll('.tab').forEach((x,i)=>x.classList.toggle('active',['carga','facturas','costo','lecturas','graficos'][i]===t));
+  g('screen-adm').querySelectorAll('.tab').forEach((x,i)=>x.classList.toggle('active',['carga','facturas','costo','lecturas','graficos','analisis','proyeccion'][i]===t));
   g('screen-adm').querySelectorAll('.subsec').forEach(x=>x.classList.remove('active'));
   g('adm-'+t).classList.add('active');
   if(t==='facturas')renderFacList();
   if(t==='costo')renderCosto();
   if(t==='lecturas')renderAdmLec();
   if(t==='graficos')renderGraf();
+  if(t==='analisis')initAnalisis();
+  if(t==='proyeccion')renderProy();
 }
 function visTab(t){
   g('screen-vis').querySelectorAll('.tab').forEach((x,i)=>x.classList.toggle('active',['resumen','graficos','costo'][i]===t));
@@ -1182,6 +1292,256 @@ function renderVis(){
 }
 
 if(g('l-f'))g('l-f').valueAsDate=new Date();
+
+// ── ANÁLISIS OPERADOR ─────────────────────────────────────────────────────────
+const FACTOR = 150;
+
+function initAnalisis(){
+  // Inicializar fechas por defecto: últimos 15 días
+  const hoy = new Date();
+  const hace15 = new Date(hoy); hace15.setDate(hoy.getDate()-15);
+  if(!gv('an-desde')) sv('an-desde', hace15.toISOString().slice(0,10));
+  if(!gv('an-hasta')) sv('an-hasta', hoy.toISOString().slice(0,10));
+  if(!g('an-desde').value) g('an-desde').value = hace15.toISOString().slice(0,10);
+  if(!g('an-hasta').value) g('an-hasta').value = hoy.toISOString().slice(0,10);
+  renderAnalisis();
+}
+
+function renderAnalisis(){
+  const desde = gv('an-desde'), hasta = gv('an-hasta');
+  const empty = g('an-empty'), body = g('an-body');
+  const lista = [...lecturas]
+    .filter(l => (!desde || l.fecha >= desde) && (!hasta || l.fecha <= hasta))
+    .sort((a,b) => a.fecha.localeCompare(b.fecha));
+
+  if(!lista.length){ empty.style.display='block'; body.style.display='none'; return; }
+  empty.style.display='none'; body.style.display='block';
+
+  // Últimos 15 para gráficos
+  const ult15 = [...lecturas].sort((a,b)=>a.fecha.localeCompare(b.fecha)).slice(-15);
+
+  // Consumo total período = (último kWh - primer kWh) * 150
+  const primerKwh = lista[0].kwh, ultimoKwh = lista[lista.length-1].kwh;
+  const consumoTotal = (ultimoKwh - primerKwh) * FACTOR;
+
+  // Diferencias diarias
+  const diffs = lista.slice(1).map((l,i) => ({
+    fecha: l.fecha,
+    kwh: l.kwh,
+    kvarh: l.kvarh,
+    bdKw: l.bdKw || 0,
+    difKwh: (l.kwh - lista[i].kwh) * FACTOR,
+    difReac: Math.abs(l.kvarh - lista[i].kvarh),
+    difBd: ((l.bdKw||0) - (lista[i].bdKw||0)) * FACTOR,
+    bdKwh: (l.bdKw||0) * FACTOR,
+    prevBdKwh: (lista[i].bdKw||0) * FACTOR,
+  }));
+
+  const maxReac = diffs.length ? Math.max(...diffs.map(d=>d.difReac)) : 0;
+  const avgReac = diffs.length ? diffs.reduce((s,d)=>s+d.difReac,0)/diffs.length : 0;
+  const alertasBd = diffs.filter(d => d.prevBdKwh > 0 && d.bdKwh > d.prevBdKwh * 1.1);
+  const criticos = diffs.filter(d => d.difReac > 0.5);
+  const alertas = diffs.filter(d => d.difReac >= 0.3 && d.difReac <= 0.5);
+
+  // Métricas
+  g('an-metrics').innerHTML = `
+    <div class="metric"><div class="metric-label">Consumo total período</div><div class="metric-val">${fmt(Math.round(consumoTotal))}</div><div class="metric-unit">kWh (×150)</div></div>
+    <div class="metric"><div class="metric-label">Registros analizados</div><div class="metric-val">${lista.length}</div><div class="metric-unit">lecturas</div></div>
+    <div class="metric"><div class="metric-label">Dif. reactiva promedio</div><div class="metric-val">${avgReac.toFixed(3)}</div><div class="metric-unit">kVArh/día</div></div>
+    <div class="metric"><div class="metric-label">Dif. reactiva máxima</div><div class="metric-val" style="color:${maxReac>0.5?'#c53030':maxReac>=0.3?'#b7791f':'#276749'}">${maxReac.toFixed(3)}</div><div class="metric-unit">kVArh</div></div>
+    <div class="metric"><div class="metric-label">Alertas peak BD</div><div class="metric-val" style="color:${alertasBd.length?'#c53030':'#276749'}">${alertasBd.length}</div><div class="metric-unit">días &gt;10%</div></div>`;
+
+  // Panel alertas
+  let alHtml = '';
+  if(criticos.length) alHtml += `<div style="padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:6px;background:#fff5f5;color:#c53030;border:1px solid #fc8181">🔴 <strong>Crítico:</strong> ${criticos.length} día(s) con diferencia reactiva &gt;0.5 kVArh: ${criticos.map(d=>d.fecha).join(', ')}</div>`;
+  if(alertas.length) alHtml += `<div style="padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:6px;background:#fffbeb;color:#b7791f;border:1px solid #fbd38d">🟡 <strong>Alerta:</strong> ${alertas.length} día(s) con diferencia reactiva 0.3–0.5 kVArh: ${alertas.map(d=>d.fecha).join(', ')}</div>`;
+  if(alertasBd.length) alHtml += `<div style="padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:6px;background:#fff5f5;color:#c53030;border:1px solid #fc8181">⚡ <strong>Peak BD &gt;10%:</strong> ${alertasBd.map(d=>`${d.fecha} (${fmt(Math.round(d.bdKwh))} vs ${fmt(Math.round(d.prevBdKwh))} kWh)`).join(', ')}</div>`;
+  if(!alHtml) alHtml = `<div style="padding:8px 12px;border-radius:8px;font-size:12px;background:#f0fff4;color:#276749;border:1px solid #9ae6b4">🟢 Sin alertas en el período seleccionado.</div>`;
+
+  // Tendencia reactiva
+  if(diffs.length >= 3){
+    const ultTres = diffs.slice(-3);
+    if(ultTres.every((d,i,a)=>i===0||d.difReac>=a[i-1].difReac))
+      alHtml += `<div style="padding:8px 12px;border-radius:8px;font-size:12px;margin-top:6px;background:#fffbeb;color:#b7791f;border:1px solid #fbd38d">📈 <strong>Tendencia al alza:</strong> La diferencia reactiva ha subido 3 días consecutivos.</div>`;
+  }
+  g('an-alertas').innerHTML = alHtml;
+
+  // Gráfico consumo kWh diario (últimos 15)
+  const ult15diffs = [];
+  for(let i=1;i<ult15.length;i++){
+    ult15diffs.push({fecha:ult15[i].fecha, val:(ult15[i].kwh-ult15[i-1].kwh)*FACTOR});
+  }
+  dc('g-an-kwh');
+  if(ult15diffs.length && g('g-an-kwh')){
+    const lp1={id:'lp1',afterDatasetsDraw(chart){const ctx=chart.ctx;chart.getDatasetMeta(0).data.forEach((pt,i)=>{const v=ult15diffs[i].val;ctx.save();ctx.font='bold 9px Segoe UI';ctx.fillStyle='#2b6cb0';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(fmt(Math.round(v)),pt.x,pt.y-4);ctx.restore();});}};
+    ch['g-an-kwh']=new Chart(g('g-an-kwh').getContext('2d'),{type:'bar',
+      data:{labels:ult15diffs.map(d=>d.fecha.slice(5)),
+        datasets:[{data:ult15diffs.map(d=>Math.max(0,Math.round(d.val))),backgroundColor:'#2b6cb0',borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+        scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#718096',font:{size:10}},title:{display:true,text:'kWh',color:'#718096',font:{size:10}}},
+        x:{grid:{display:false},ticks:{color:'#718096',font:{size:10}}}}},
+      plugins:[lp1]});
+  }
+
+  // Gráfico peak BD kWh (últimos 15)
+  const ult15bd = ult15.map((l,i)=>({fecha:l.fecha, bdKwh:(l.bdKw||0)*FACTOR, prev:i>0?(ult15[i-1].bdKw||0)*FACTOR:null}));
+  dc('g-an-bd');
+  if(ult15bd.length && g('g-an-bd')){
+    const colors = ult15bd.map((d,i)=> i>0 && d.prev>0 && d.bdKwh > d.prev*1.1 ? '#c53030' : '#2b6cb0');
+    const lp2={id:'lp2',afterDatasetsDraw(chart){const ctx=chart.ctx;chart.getDatasetMeta(0).data.forEach((pt,i)=>{const v=ult15bd[i].bdKwh;if(!v)return;ctx.save();ctx.font='bold 9px Segoe UI';ctx.fillStyle=colors[i];ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(fmt(Math.round(v)),pt.x,pt.y-4);ctx.restore();});}};
+    ch['g-an-bd']=new Chart(g('g-an-bd').getContext('2d'),{type:'bar',
+      data:{labels:ult15bd.map(d=>d.fecha.slice(5)),
+        datasets:[{data:ult15bd.map(d=>Math.round(d.bdKwh)),backgroundColor:colors,borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+        scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#718096',font:{size:10}},title:{display:true,text:'kWh (×150)',color:'#718096',font:{size:10}}},
+        x:{grid:{display:false},ticks:{color:'#718096',font:{size:10}}}}},
+      plugins:[lp2]});
+  }
+
+  // Gráfico reactiva diaria
+  const reacDiffs = ult15.slice(1).map((l,i)=>({fecha:l.fecha, val:Math.abs(l.kvarh-(ult15[i].kvarh||0))}));
+  dc('g-an-reac');
+  if(reacDiffs.length && g('g-an-reac')){
+    const rColors = reacDiffs.map(d=>d.val>0.5?'#c53030':d.val>=0.3?'#b7791f':'#276749');
+    ch['g-an-reac']=new Chart(g('g-an-reac').getContext('2d'),{type:'bar',
+      data:{labels:reacDiffs.map(d=>d.fecha.slice(5)),
+        datasets:[
+          {data:reacDiffs.map(d=>+d.val.toFixed(3)),backgroundColor:rColors,borderRadius:4},
+          {type:'line',data:reacDiffs.map(()=>0.33),borderColor:'#b7791f',borderDash:[4,3],pointRadius:0,borderWidth:1.5},
+          {type:'line',data:reacDiffs.map(()=>0.5),borderColor:'#c53030',borderDash:[4,3],pointRadius:0,borderWidth:1.5}
+        ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+        scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#718096',font:{size:10}},title:{display:true,text:'kVArh',color:'#718096',font:{size:10}}},
+        x:{grid:{display:false},ticks:{color:'#718096',font:{size:10}}}}}}); 
+  }
+
+  // Tabla detalle
+  const semaforo = v => v>0.5?'<span style="color:#c53030;font-weight:700">🔴 Crítico</span>':v>=0.3?'<span style="color:#b7791f;font-weight:700">🟡 Alerta</span>':'<span style="color:#276749;font-weight:700">🟢 Normal</span>';
+  g('an-tbody').innerHTML = lista.map((l,i)=>{
+    if(i===0) return `<tr><td style="font-weight:600">${l.fecha}</td><td>${fmt(l.kwh)}</td><td>—</td><td>${fmt(l.kvarh)}</td><td>—</td><td>—</td><td>${(l.bdKw||0).toFixed(4)}</td><td>—</td><td>—</td></tr>`;
+    const prev = lista[i-1];
+    const difKwh = (l.kwh - prev.kwh)*FACTOR;
+    const difReac = Math.abs(l.kvarh - prev.kvarh);
+    const bdKwh = (l.bdKw||0)*FACTOR;
+    const prevBdKwh = (prev.bdKw||0)*FACTOR;
+    const peakAlert = prevBdKwh>0 && bdKwh>prevBdKwh*1.1;
+    return `<tr>
+      <td style="font-weight:600">${l.fecha}</td>
+      <td>${fmt(l.kwh)}</td>
+      <td style="font-weight:600;color:#2b6cb0">${fmt(Math.round(difKwh))}</td>
+      <td>${fmt(l.kvarh)}</td>
+      <td style="font-weight:600;color:${difReac>0.5?'#c53030':difReac>=0.3?'#b7791f':'#276749'}">${difReac.toFixed(3)}</td>
+      <td>${semaforo(difReac)}</td>
+      <td>${(l.bdKw||0).toFixed(4)}</td>
+      <td style="font-weight:600;color:${peakAlert?'#c53030':'#1a202c'}">${fmt(Math.round(bdKwh))}</td>
+      <td>${peakAlert?'<span style="color:#c53030;font-weight:700">⚡ +10%</span>':'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── PROYECCIÓN HP ARRASTRE ────────────────────────────────────────────────────
+const MESES_F=['Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic','Ene','Feb','Mar'];
+const MESES_IDX=[4,5,6,7,8,9,10,11,12,1,2,3];
+const FEST_EST={1:1.02,2:0.96,3:1.00,4:0.98,5:1.00,6:1.10,7:1.08,8:0.95,9:0.95,10:1.02,11:1.03,12:1.00};
+let escFactor=0;
+
+function linReg(xs,ys){
+  const n=xs.length,sx=xs.reduce((a,b)=>a+b,0),sy=ys.reduce((a,b)=>a+b,0);
+  const sxy=xs.reduce((a,x,i)=>a+x*ys[i],0),sxx=xs.reduce((a,x)=>a+x*x,0);
+  const m=(n*sxy-sx*sy)/(n*sxx-sx*sx); return{m,b:(sy-m*sx)/n};
+}
+function movAvg(arr,w){return arr.map((_,i)=>i<w-1?null:arr.slice(i-w+1,i+1).reduce((a,b)=>a+b,0)/w);}
+
+function updateEsc(v){
+  escFactor=parseFloat(v);
+  const map={'-1':'Muy optimista','-0.5':'Optimista','0':'Base','0.5':'Conservador','1':'Pesimista'};
+  const k=Object.keys(map).reduce((a,b)=>Math.abs(b-v)<Math.abs(a-v)?b:a);
+  if(g('esc-lbl'))g('esc-lbl').textContent=map[k]||'Base';
+  renderProy();
+}
+
+function renderProy(){
+  const empty=g('proy-empty'),body=g('proy-body');
+  if(!g('proy-empty'))return;
+  if(facturas.length<2){empty.style.display='block';body.style.display='none';return;}
+  empty.style.display='none';body.style.display='block';
+  const sorted=[...facturas].sort((a,b)=>a.fechaEm.localeCompare(b.fechaEm));
+  const ddas=sorted.map(f=>f.ddaHp||0);
+  const xs=ddas.map((_,i)=>i);
+  const reg=linReg(xs,ddas);
+  const ma=movAvg(ddas,Math.min(3,ddas.length));
+  const lastMA=ma[ma.length-1]||ddas[ddas.length-1];
+  const prom=ddas.reduce((a,b)=>a+b,0)/ddas.length;
+  const std=Math.sqrt(ddas.reduce((a,v)=>a+Math.pow(v-prom,2),0)/ddas.length);
+  const proj=MESES_IDX.map((mi,i)=>{
+    const xf=ddas.length+i;const base=(reg.m*xf+reg.b)*0.5+lastMA*0.5;
+    const aj=base*(FEST_EST[mi]||1)*(1-escFactor*0.08);const conf=std*(1+i*0.05);
+    return{label:MESES_F[i],val:Math.max(30,+aj.toFixed(2)),min:Math.max(25,+(aj-conf).toFixed(2)),max:+(aj+conf).toFixed(2),costo:Math.round(aj*10700),mi};
+  });
+  const maxP=Math.max(...proj.map(p=>p.val)),minP=Math.min(...proj.map(p=>p.val));
+  const promP=proj.reduce((s,p)=>s+p.val,0)/proj.length;
+  const totCosto=proj.reduce((s,p)=>s+p.costo,0);
+  g('proy-met').innerHTML=`
+    <div class="metric"><div class="metric-label">HP proy. promedio</div><div class="metric-val">${promP.toFixed(1)}</div><div class="metric-unit">kW/mes</div></div>
+    <div class="metric"><div class="metric-label">HP máx proyectada</div><div class="metric-val">${maxP.toFixed(1)}</div><div class="metric-unit">kW</div></div>
+    <div class="metric"><div class="metric-label">HP mín proyectada</div><div class="metric-val">${minP.toFixed(1)}</div><div class="metric-unit">kW</div></div>
+    <div class="metric"><div class="metric-label">Costo arrastre anual est.</div><div class="metric-val" style="font-size:13px">$${(totCosto/1000000).toFixed(2)}M</div><div class="metric-unit">CLP proyectado</div></div>
+    <div class="metric"><div class="metric-label">Promedio histórico</div><div class="metric-val">${prom.toFixed(1)}</div><div class="metric-unit">kW referencia</div></div>`;
+  const histLbls=sorted.map(f=>f.fechaEm?f.fechaEm.slice(0,7):'?');
+  const allLbls=[...histLbls,...proj.map(p=>p.label)];
+  const histKw=[...ddas,...Array(12).fill(null)];
+  const projKw=[...Array(ddas.length-1).fill(null),ddas[ddas.length-1],...proj.map(p=>p.val)];
+  const projMin=[...Array(ddas.length-1).fill(null),ddas[ddas.length-1],...proj.map(p=>p.min)];
+  const projMax=[...Array(ddas.length-1).fill(null),ddas[ddas.length-1],...proj.map(p=>p.max)];
+  dc('p-kw');
+  if(g('p-kw')){
+    const kwLbl={id:'kwlbl',afterDatasetsDraw(chart){const ctx=chart.ctx;[[3,'#2b6cb0',ddas.length],[2,'#c05621',ddas.length]].forEach(([di,col,thr])=>{const meta=chart.getDatasetMeta(di),ds=chart.data.datasets[di];meta.data.forEach((pt,i)=>{const v=ds.data[i];if(v===null)return;if(di===3&&i>=thr)return;if(di===2&&i<thr-1)return;ctx.save();ctx.font='bold 9px Segoe UI';ctx.fillStyle=col;ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(v,pt.x,pt.y-4);ctx.restore();});});} };
+    ch['p-kw']=new Chart(g('p-kw').getContext('2d'),{type:'line',
+      data:{labels:allLbls,datasets:[
+        {data:projMax,borderColor:'transparent',backgroundColor:'rgba(192,86,33,.1)',pointRadius:0,fill:'+1',tension:0,order:5},
+        {data:projMin,borderColor:'transparent',backgroundColor:'rgba(192,86,33,.1)',pointRadius:0,fill:false,tension:0,order:6},
+        {data:projKw,borderColor:'#c05621',backgroundColor:'transparent',borderDash:[6,4],pointBackgroundColor:'#c05621',pointRadius:allLbls.map((_,i)=>i>=ddas.length?4:0),tension:0,borderWidth:2,order:2},
+        {data:histKw,borderColor:'#2b6cb0',backgroundColor:'transparent',pointBackgroundColor:'#2b6cb0',pointRadius:5,tension:0,borderWidth:2.5,order:1},
+        {data:allLbls.map(()=>prom),borderColor:'rgba(128,128,128,.4)',borderDash:[3,3],pointRadius:0,tension:0,borderWidth:1,order:3}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
+        scales:{y:{beginAtZero:false,grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#718096',font:{size:10}},title:{display:true,text:'kW',color:'#718096',font:{size:10}}},
+        x:{grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#718096',font:{size:10},maxRotation:45}}}},
+      plugins:[kwLbl]});
+  }
+  const histClp=[...sorted.map(f=>f.cDdaHp),...Array(12).fill(null)];
+  const projClp=[...Array(ddas.length-1).fill(null),sorted[ddas.length-1].cDdaHp,...proj.map(p=>p.costo)];
+  dc('p-clp');
+  if(g('p-clp')){
+    ch['p-clp']=new Chart(g('p-clp').getContext('2d'),{type:'line',
+      data:{labels:allLbls,datasets:[
+        {data:histClp,borderColor:'#2b6cb0',backgroundColor:'rgba(43,108,176,.07)',pointBackgroundColor:'#2b6cb0',pointRadius:5,tension:0,fill:true,borderWidth:2.5},
+        {data:projClp,borderColor:'#c05621',backgroundColor:'rgba(192,86,33,.07)',borderDash:[6,4],pointBackgroundColor:'#c05621',pointRadius:allLbls.map((_,i)=>i>=ddas.length?4:0),fill:false,tension:0,borderWidth:2}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
+        scales:{y:{beginAtZero:false,grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#718096',font:{size:10},callback:v=>v>=1000000?(v/1000000).toFixed(1)+'M':(v/1000).toFixed(0)+'k'},title:{display:true,text:'CLP',color:'#718096',font:{size:10}}},
+        x:{grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#718096',font:{size:10},maxRotation:45}}}}});
+  }
+  const mesesAltos=proj.filter(p=>p.val>prom+std),mesesBajos=proj.filter(p=>p.val<prom-std*0.5);
+  let ins='';
+  if(Math.abs(reg.m)<0.1) ins+=`<div style="padding:9px 12px;border-radius:8px;font-size:12px;margin-bottom:8px;background:#f0fff4;color:#276749;border-left:3px solid #276749">Tendencia <strong>estable</strong>: la demanda HP no muestra incremento sostenido.</div>`;
+  else if(reg.m>0) ins+=`<div style="padding:9px 12px;border-radius:8px;font-size:12px;margin-bottom:8px;background:#fffbeb;color:#b7791f;border-left:3px solid #b7791f">Tendencia <strong>al alza</strong> (+${reg.m.toFixed(2)} kW/período). Evalúe desplazar cargas fuera del horario punta.</div>`;
+  else ins+=`<div style="padding:9px 12px;border-radius:8px;font-size:12px;margin-bottom:8px;background:#f0fff4;color:#276749;border-left:3px solid #276749">Tendencia <strong>a la baja</strong> (${reg.m.toFixed(2)} kW/período). Favorable para reducir cargo por arrastre.</div>`;
+  if(mesesAltos.length) ins+=`<div style="padding:9px 12px;border-radius:8px;font-size:12px;margin-bottom:8px;background:#fff5f5;color:#c53030;border-left:3px solid #c53030"><strong>Meses de riesgo alto:</strong> ${mesesAltos.map(p=>p.label).join(', ')}. HP proyectada supera el promedio histórico en más de 1 desviación estándar.</div>`;
+  if(mesesBajos.length) ins+=`<div style="padding:9px 12px;border-radius:8px;font-size:12px;margin-bottom:8px;background:#f0fff4;color:#276749;border-left:3px solid #276749"><strong>Meses favorables:</strong> ${mesesBajos.map(p=>p.label).join(', ')}. Menor demanda HP esperada.</div>`;
+  ins+=`<div style="padding:9px 12px;border-radius:8px;font-size:12px;margin-bottom:8px;background:#ebf8ff;color:#2b6cb0;border-left:3px solid #2b6cb0">Costo arrastre HP anual proyectado: <strong>$${(totCosto/1000000).toFixed(2)}M CLP</strong>. Mantener HP bajo ${(prom*0.9).toFixed(1)} kW generaría un ahorro de <strong>$${((totCosto*0.1)/1000000).toFixed(2)}M</strong> anuales.</div>`;
+  if(g('proy-insights'))g('proy-insights').innerHTML=ins;
+  const badge=v=>v>prom+std?'<span style="color:#c53030;font-weight:700">Alto</span>':v>prom?'<span style="color:#b7791f;font-weight:700">Medio</span>':'<span style="color:#276749;font-weight:700">Bajo</span>';
+  if(g('proy-tbl'))g('proy-tbl').innerHTML=proj.map(p=>{const d=((p.val-prom)/prom*100);return`<tr>
+    <td style="font-weight:600;text-align:left">${p.label}</td>
+    <td style="font-weight:600">${p.val.toFixed(2)}</td>
+    <td style="color:#718096">${p.min.toFixed(2)}</td><td style="color:#718096">${p.max.toFixed(2)}</td>
+    <td>${fclp(p.costo)}</td>
+    <td style="color:${d>10?'#c53030':d<-5?'#276749':'#1a202c'}">${d>=0?'+':''}${d.toFixed(1)}%</td>
+    <td>${badge(p.val)}</td>
+  </tr>`;}).join('');
+}
+
 </script>
 </body>
 </html>
