@@ -172,6 +172,7 @@ input[readonly]{background:#f7fafc;color:#718096}
     <button class="tab active" onclick="opTab('nueva')">Nueva lectura</button>
     <button class="tab" onclick="opTab('excel')">Cargar Excel</button>
     <button class="tab" onclick="opTab('historial')">Mi historial</button>
+    <button class="tab" onclick="opTab('graficos')">Gráficos</button>
   </div>
 
   <div id="op-nueva" class="subsec active">
@@ -319,6 +320,59 @@ input[readonly]{background:#f7fafc;color:#718096}
   </div>
 </div>
 
+
+  <div id="op-graficos" class="subsec">
+    <div class="card">
+      <div class="card-title">Gráficos de lecturas del medidor</div>
+      <div class="card-sub">Basados en los intervalos entre lecturas consecutivas. Factor constante <strong>×150</strong>. Seleccione un rango de fechas o vea los últimos 15 intervalos.</div>
+      <div class="g2" style="margin-bottom:8px">
+        <div class="fg"><label>Fecha inicio</label><input type="date" id="op-g-desde" onchange="renderOpGraf()"/></div>
+        <div class="fg"><label>Fecha fin</label><input type="date" id="op-g-hasta" onchange="renderOpGraf()"/></div>
+      </div>
+      <button class="btn btn-p btn-sm" onclick="renderOpGraf()">Aplicar</button>
+    </div>
+    <div id="op-g-empty" class="empty" style="display:none">Sin lecturas suficientes. Registre al menos 2 lecturas.</div>
+    <div id="op-g-body" style="display:none">
+      <div class="metrics" id="op-g-metrics"></div>
+      <div id="op-g-alertas" style="margin-bottom:1rem"></div>
+      <div class="card">
+        <div class="card-title">Consumo de energía por intervalo (kWh × 150)</div>
+        <div class="chart-wrap"><canvas id="og-kwh" role="img" aria-label="Consumo kWh por intervalo"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Peak hora punta por intervalo (kWh × 150)</div>
+        <div class="chart-wrap"><canvas id="og-hp" role="img" aria-label="Peak HP kWh por intervalo"></canvas></div>
+        <div class="legend">
+          <div class="legend-item"><span style="width:10px;height:10px;border-radius:50%;background:#2b6cb0;display:inline-block"></span><span>Normal</span></div>
+          <div class="legend-item"><span style="width:10px;height:10px;border-radius:50%;background:#c53030;display:inline-block"></span><span>Subida &gt;10% respecto al intervalo anterior</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Diferencia energía reactiva por intervalo (kVArh)</div>
+        <div class="chart-wrap"><canvas id="og-reac" role="img" aria-label="Reactiva por intervalo"></canvas></div>
+        <div class="legend">
+          <div class="legend-item"><span style="width:10px;height:10px;border-radius:50%;background:#276749;display:inline-block"></span><span>Normal &lt;0.3</span></div>
+          <div class="legend-item"><span style="width:10px;height:10px;border-radius:50%;background:#b7791f;display:inline-block"></span><span>Alerta 0.3–0.5</span></div>
+          <div class="legend-item"><span style="width:10px;height:10px;border-radius:50%;background:#c53030;display:inline-block"></span><span>Crítico &gt;0.5</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Detalle de intervalos</div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr>
+              <th>Intervalo</th><th>kWh medidor</th>
+              <th>Consumo kWh (×150)</th><th>kVArh</th>
+              <th>Dif. reactiva</th><th>Estado</th>
+              <th>HP kW</th><th>HP kWh (×150)</th><th>Peak HP</th>
+            </tr></thead>
+            <tbody id="og-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
 <!-- ADMINISTRADOR -->
 <div id="screen-adm" class="screen">
   <div class="app-header" style="background:linear-gradient(135deg,#1c4532,#276749)">
@@ -338,8 +392,7 @@ input[readonly]{background:#f7fafc;color:#718096}
     <button class="tab" onclick="admTab('facturas')">Facturas</button>
     <button class="tab" onclick="admTab('costo')">Costo kWh</button>
     <button class="tab" onclick="admTab('lecturas')">Lecturas operador</button>
-    <button class="tab" onclick="admTab('graficos')">Gráficos</button>
-    <button class="tab" onclick="admTab('analisis')">Análisis operador</button>
+    <button class="tab" onclick="admTab('graficos')">Gráficos facturas</button>
     <button class="tab" onclick="admTab('proyeccion')">Proyección arrastre</button>
   </div>
 
@@ -931,21 +984,21 @@ async function cargarFacturas(){
 
 // ── TABS ──────────────────────────────────────────────────────────────────────
 function opTab(t){
-  g('screen-op').querySelectorAll('.tab').forEach((x,i)=>x.classList.toggle('active',['nueva','excel','historial'][i]===t));
+  g('screen-op').querySelectorAll('.tab').forEach((x,i)=>x.classList.toggle('active',['nueva','excel','historial','graficos'][i]===t));
   g('screen-op').querySelectorAll('.subsec').forEach(x=>x.classList.remove('active'));
   g('op-'+t).classList.add('active');
   if(t==='historial')renderOpHist();
   if(t==='excel')clearExcel();
+  if(t==='graficos')initOpGraf();
 }
 function admTab(t){
-  g('screen-adm').querySelectorAll('.tab').forEach((x,i)=>x.classList.toggle('active',['carga','facturas','costo','lecturas','graficos','analisis','proyeccion'][i]===t));
+  g('screen-adm').querySelectorAll('.tab').forEach((x,i)=>x.classList.toggle('active',['carga','facturas','costo','lecturas','graficos','proyeccion'][i]===t));
   g('screen-adm').querySelectorAll('.subsec').forEach(x=>x.classList.remove('active'));
   g('adm-'+t).classList.add('active');
   if(t==='facturas')renderFacList();
   if(t==='costo')renderCosto();
   if(t==='lecturas')renderAdmLec();
   if(t==='graficos')renderGraf();
-  if(t==='analisis')initAnalisis();
   if(t==='proyeccion')renderProy();
 }
 function visTab(t){
@@ -1868,6 +1921,126 @@ async function subirExcel(){
   alert('✓ '+subidas+' filas nuevas subidas a Google Sheets.'+
     (errores>0?' '+errores+' filas con error.':''));
   if(!errores)clearExcel();
+}
+
+
+// ── GRÁFICOS DEL OPERADOR ─────────────────────────────────────────────────────
+function initOpGraf(){
+  const hoy = new Date();
+  const hace15 = new Date(hoy); hace15.setDate(hoy.getDate()-20);
+  if(!g('op-g-desde').value) g('op-g-desde').value = hace15.toISOString().slice(0,10);
+  if(!g('op-g-hasta').value) g('op-g-hasta').value = hoy.toISOString().slice(0,10);
+  renderOpGraf();
+}
+
+function renderOpGraf(){
+  const desde = gv('op-g-desde'), hasta = gv('op-g-hasta');
+  const empty = g('op-g-empty'), body = g('op-g-body');
+
+  const todas = [...lecturas].sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  const lista = todas.filter(l=>(!desde||l.fecha>=desde)&&(!hasta||l.fecha<=hasta));
+
+  if(lista.length < 2){empty.style.display='block';body.style.display='none';return;}
+  empty.style.display='none';body.style.display='block';
+
+  // Calcular intervalos entre puntos consecutivos
+  const intervalos = lista.slice(1).map((l,i)=>{
+    const prev = lista[i];
+    const label = prev.fecha.slice(5)+'→'+l.fecha.slice(5);
+    const difKwh  = Math.max(0,(l.kwh - prev.kwh)*FACTOR);
+    const difReac = Math.abs(l.kvarh - prev.kvarh);
+    const hpKwh   = Math.max(0,(l.hpKw||0)*FACTOR);
+    const prevHpKwh = Math.max(0,(prev.hpKw||0)*FACTOR);
+    const peakAlert = prevHpKwh>0 && hpKwh>prevHpKwh*1.1;
+    return{label,difKwh,difReac,hpKwh,prevHpKwh,peakAlert,
+           kwh:l.kwh,kvarh:l.kvarh,hpKw:l.hpKw||0};
+  });
+
+  // Últimos 15 intervalos para gráficos
+  const ult15 = intervalos.slice(-15);
+
+  const consumoTotal = intervalos.reduce((s,d)=>s+d.difKwh,0);
+  const maxReac = intervalos.length?Math.max(...intervalos.map(d=>d.difReac)):0;
+  const avgReac = intervalos.length?intervalos.reduce((s,d)=>s+d.difReac,0)/intervalos.length:0;
+  const alertasPeak = intervalos.filter(d=>d.peakAlert);
+  const criticos = intervalos.filter(d=>d.difReac>0.5);
+  const alertas  = intervalos.filter(d=>d.difReac>=0.3&&d.difReac<=0.5);
+
+  // Métricas
+  g('op-g-metrics').innerHTML=`
+    <div class="metric"><div class="metric-label">Consumo total período</div><div class="metric-val">${fmt(Math.round(consumoTotal))}</div><div class="metric-unit">kWh (×150)</div></div>
+    <div class="metric"><div class="metric-label">Intervalos</div><div class="metric-val">${intervalos.length}</div><div class="metric-unit">puntos</div></div>
+    <div class="metric"><div class="metric-label">Reactiva promedio</div><div class="metric-val">${avgReac.toFixed(3)}</div><div class="metric-unit">kVArh</div></div>
+    <div class="metric"><div class="metric-label">Reactiva máxima</div><div class="metric-val" style="color:${maxReac>0.5?'#c53030':maxReac>=0.3?'#b7791f':'#276749'}">${maxReac.toFixed(3)}</div><div class="metric-unit">kVArh</div></div>
+    <div class="metric"><div class="metric-label">Alertas peak HP</div><div class="metric-val" style="color:${alertasPeak.length?'#c53030':'#276749'}">${alertasPeak.length}</div><div class="metric-unit">intervalos</div></div>`;
+
+  // Alertas
+  let alHtml='';
+  if(criticos.length) alHtml+=`<div style="padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:6px;background:#fff5f5;color:#c53030;border:1px solid #fc8181">🔴 <strong>Crítico:</strong> ${criticos.length} intervalo(s) con reactiva &gt;0.5: ${criticos.map(d=>d.label).join(' | ')}</div>`;
+  if(alertas.length) alHtml+=`<div style="padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:6px;background:#fffbeb;color:#b7791f;border:1px solid #fbd38d">🟡 <strong>Alerta:</strong> ${alertas.length} intervalo(s) con reactiva 0.3–0.5: ${alertas.map(d=>d.label).join(' | ')}</div>`;
+  if(alertasPeak.length) alHtml+=`<div style="padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:6px;background:#fff5f5;color:#c53030;border:1px solid #fc8181">⚡ <strong>Peak HP &gt;10%:</strong> ${alertasPeak.map(d=>`${d.label} (${fmt(Math.round(d.hpKwh))} vs ${fmt(Math.round(d.prevHpKwh))} kWh)`).join(' | ')}</div>`;
+  if(!alHtml) alHtml=`<div style="padding:8px 12px;border-radius:8px;font-size:12px;background:#f0fff4;color:#276749;border:1px solid #9ae6b4">🟢 Sin alertas en el período seleccionado.</div>`;
+  if(intervalos.length>=3){
+    const ult3=intervalos.slice(-3);
+    if(ult3.every((d,i,a)=>i===0||d.difReac>=a[i-1].difReac))
+      alHtml+=`<div style="padding:8px 12px;border-radius:8px;font-size:12px;margin-top:6px;background:#fffbeb;color:#b7791f;border:1px solid #fbd38d">📈 <strong>Tendencia al alza:</strong> Reactiva subió en los últimos 3 intervalos consecutivos.</div>`;
+  }
+  g('op-g-alertas').innerHTML=alHtml;
+
+  // Gráfico 1 — Consumo kWh
+  dc('og-kwh');
+  if(ult15.length&&g('og-kwh')){
+    const lp={id:'ogk',afterDatasetsDraw(chart){const ctx=chart.ctx;chart.getDatasetMeta(0).data.forEach((pt,i)=>{const v=ult15[i].difKwh;if(!v)return;ctx.save();ctx.font='bold 9px Segoe UI';ctx.fillStyle='#2b6cb0';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(fmt(Math.round(v)),pt.x,pt.y-4);ctx.restore();});}};
+    ch['og-kwh']=new Chart(g('og-kwh').getContext('2d'),{type:'bar',
+      data:{labels:ult15.map(d=>d.label),datasets:[{data:ult15.map(d=>Math.round(d.difKwh)),backgroundColor:'#2b6cb0',borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+        scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#718096',font:{size:10}},title:{display:true,text:'kWh (×150)',color:'#718096',font:{size:10}}},
+        x:{grid:{display:false},ticks:{color:'#718096',font:{size:9},maxRotation:45}}}},
+      plugins:[lp]});
+  }
+
+  // Gráfico 2 — Peak HP
+  dc('og-hp');
+  if(ult15.length&&g('og-hp')){
+    const hpCol=ult15.map(d=>d.peakAlert?'#c53030':'#2b6cb0');
+    const lp2={id:'ogh',afterDatasetsDraw(chart){const ctx=chart.ctx;chart.getDatasetMeta(0).data.forEach((pt,i)=>{const v=ult15[i].hpKwh;if(!v)return;ctx.save();ctx.font='bold 9px Segoe UI';ctx.fillStyle=hpCol[i];ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(fmt(Math.round(v)),pt.x,pt.y-4);ctx.restore();});}};
+    ch['og-hp']=new Chart(g('og-hp').getContext('2d'),{type:'bar',
+      data:{labels:ult15.map(d=>d.label),datasets:[{data:ult15.map(d=>Math.round(d.hpKwh)),backgroundColor:hpCol,borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+        scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#718096',font:{size:10}},title:{display:true,text:'kWh (×150)',color:'#718096',font:{size:10}}},
+        x:{grid:{display:false},ticks:{color:'#718096',font:{size:9},maxRotation:45}}}},
+      plugins:[lp2]});
+  }
+
+  // Gráfico 3 — Reactiva
+  dc('og-reac');
+  if(ult15.length&&g('og-reac')){
+    const rCol=ult15.map(d=>d.difReac>0.5?'#c53030':d.difReac>=0.3?'#b7791f':'#276749');
+    ch['og-reac']=new Chart(g('og-reac').getContext('2d'),{type:'bar',
+      data:{labels:ult15.map(d=>d.label),datasets:[
+        {data:ult15.map(d=>+d.difReac.toFixed(3)),backgroundColor:rCol,borderRadius:4,order:1},
+        {type:'line',data:ult15.map(()=>0.33),borderColor:'#b7791f',borderDash:[4,3],pointRadius:0,borderWidth:1.5,order:2},
+        {type:'line',data:ult15.map(()=>0.5),borderColor:'#c53030',borderDash:[4,3],pointRadius:0,borderWidth:1.5,order:3}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+        scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#718096',font:{size:10}},title:{display:true,text:'kVArh',color:'#718096',font:{size:10}}},
+        x:{grid:{display:false},ticks:{color:'#718096',font:{size:9},maxRotation:45}}}}});
+  }
+
+  // Tabla detalle
+  const sem=v=>v>0.5?'<span style="color:#c53030;font-weight:700">🔴 Crítico</span>':v>=0.3?'<span style="color:#b7791f;font-weight:700">🟡 Alerta</span>':'<span style="color:#276749;font-weight:700">🟢 Normal</span>';
+  const primeraFila=`<tr style="background:#f7fafc"><td style="font-weight:600;color:#718096">${lista[0].fecha}</td><td colspan="8" style="color:#a0aec0;font-size:11px;text-align:left;padding-left:10px">Punto de inicio del período</td></tr>`;
+  g('og-tbody').innerHTML=primeraFila+intervalos.map(d=>`<tr>
+    <td style="font-weight:700;font-size:11px;color:#276749">${d.label}</td>
+    <td>${fmt(d.kwh)}</td>
+    <td style="font-weight:700;color:#2b6cb0">${fmt(Math.round(d.difKwh))} kWh</td>
+    <td>${fmt(d.kvarh)}</td>
+    <td style="font-weight:700;color:${d.difReac>0.5?'#c53030':d.difReac>=0.3?'#b7791f':'#276749'}">${d.difReac.toFixed(3)}</td>
+    <td>${sem(d.difReac)}</td>
+    <td>${d.hpKw.toFixed(4)}</td>
+    <td style="font-weight:700;color:${d.peakAlert?'#c53030':'#1a202c'}">${fmt(Math.round(d.hpKwh))} kWh</td>
+    <td>${d.peakAlert?'<span style="color:#c53030;font-weight:700">⚡ +10%</span>':'—'}</td>
+  </tr>`).join('');
 }
 
 </script>
