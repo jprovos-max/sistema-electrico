@@ -124,6 +124,9 @@ input[readonly]{background:#f7fafc;color:#718096}
         Iniciar sesión con Google
       </button>
       <div style="font-size:11px;color:#718096;margin-top:8px;text-align:center">Los datos se sincronizan automáticamente con Google Sheets</div>
+      <div style="text-align:center;margin-top:10px">
+        <button class="btn btn-sm" onclick="modoDemo()" style="font-size:11px;color:#718096;border-color:#e2e8f0">Continuar sin Google (modo demo)</button>
+      </div>
       <div style="margin-top:12px;padding-top:12px;border-top:1px solid #e2e8f0">
         <div style="font-size:10px;color:#a0aec0;text-align:center;margin-bottom:8px;font-weight:600;letter-spacing:.05em">USUARIOS CONFIGURADOS</div>
         <div style="display:flex;flex-direction:column;gap:5px">
@@ -712,13 +715,45 @@ function hdr(){return{Authorization:'Bearer '+accessToken,'Content-Type':'applic
 // ── AUTH ──────────────────────────────────────────────────────────────────────
 function iniciarGoogle(){
   g('login-status').innerHTML='<div class="alert-info">Conectando con Google...</div>';
+  // Si GSI ya está cargado, usarlo directamente
+  if(window.google&&window.google.accounts){
+    lanzarTokenClient();
+    return;
+  }
+  // Cargar GSI script
   const s=document.createElement('script');
   s.src='https://accounts.google.com/gsi/client';
+  s.async=true;s.defer=true;
   s.onload=()=>{
+    setTimeout(lanzarTokenClient,300);
+  };
+  s.onerror=()=>{
+    g('login-status').innerHTML='<div class="alert-warn">No se pudo conectar con Google. Cargando modo demo...</div>';
+    setTimeout(modoDemo,1200);
+  };
+  document.head.appendChild(s);
+  // Timeout de seguridad: si en 8 segundos no cargó, modo demo
+  setTimeout(()=>{
+    if(!window.google){
+      g('login-status').innerHTML='<div class="alert-warn">Google tardó demasiado. Cargando modo demo...</div>';
+      setTimeout(modoDemo,800);
+    }
+  },8000);
+}
+
+function lanzarTokenClient(){
+  try{
+    if(!window.google||!window.google.accounts){
+      g('login-status').innerHTML='<div class="alert-warn">Google no disponible. Usando modo demo.</div>';
+      setTimeout(modoDemo,1000);return;
+    }
     const tc=google.accounts.oauth2.initTokenClient({
       client_id:CLIENT_ID,scope:SCOPES,
       callback:(r)=>{
-        if(r.error){g('login-status').innerHTML=`<div class="alert-warn">Error Google: ${r.error}.<br>Posible causa: el origen de este archivo no está autorizado en Google Cloud Console. Intente con modo demo.</div>`;return;}
+        if(r.error){
+          g('login-status').innerHTML='<div class="alert-warn">Error: '+r.error+'.<br><button class="btn btn-sm" onclick="modoDemo()" style="margin-top:6px">Usar modo demo</button></div>';
+          return;
+        }
         accessToken=r.access_token;
         fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+accessToken}})
           .then(res=>res.json()).then(d=>{userEmail=d.email||'';mostrarPerfiles();})
@@ -726,9 +761,9 @@ function iniciarGoogle(){
       }
     });
     tc.requestAccessToken({prompt:'consent'});
-  };
-  s.onerror=()=>{g('login-status').innerHTML='<div class="alert-warn">No se pudo conectar con Google. Usando modo demo.</div>';setTimeout(modoDemo,1000);};
-  document.head.appendChild(s);
+  }catch(e){
+    g('login-status').innerHTML='<div class="alert-warn">Error al iniciar Google: '+e.message+'.<br><button class="btn btn-sm" onclick="modoDemo()" style="margin-top:6px">Usar modo demo</button></div>';
+  }
 }
 
 function mostrarPerfiles(){
