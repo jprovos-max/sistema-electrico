@@ -1,1 +1,1839 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sistema Eléctrico — UDT</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:#f0f4f8;color:#1a202c;min-height:100vh}
+.screen{display:none}.screen.active{display:block}
+.subsec{display:none}.subsec.active{display:block}
+.app-wrap{max-width:900px;margin:0 auto;padding:1rem}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.card-title{font-size:13px;font-weight:600;color:#1a202c;margin-bottom:.75rem}
+.card-sub{font-size:11px;color:#718096;padding:7px 10px;background:#f7fafc;border-radius:8px;line-height:1.5;margin-bottom:.85rem;border:1px solid #e2e8f0}
+.tabs{display:flex;border-bottom:2px solid #e2e8f0;margin-bottom:1rem;overflow-x:auto;gap:2px}
+.tab{padding:8px 14px;font-size:12px;cursor:pointer;background:none;border:none;color:#718096;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;font-family:inherit;font-weight:500;transition:all .15s}
+.tab.active{color:#2b6cb0;border-bottom-color:#2b6cb0;font-weight:600}
+.tab:hover:not(.active){color:#2d3748}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:1rem}
+.metric{background:#f7fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px}
+.metric-label{font-size:10px;color:#718096;margin-bottom:3px;line-height:1.3;font-weight:500}
+.metric-val{font-size:18px;font-weight:700;color:#1a202c;line-height:1.2}
+.metric-unit{font-size:10px;color:#a0aec0;margin-top:2px}
+.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
+.fg label{font-size:10px;color:#4a5568;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px}
+input,select,textarea{width:100%;padding:7px 10px;font-size:12px;border:1.5px solid #cbd5e0;border-radius:8px;background:#fff;color:#1a202c;font-family:inherit;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#3182ce;box-shadow:0 0 0 3px rgba(49,130,206,.15)}
+input[readonly]{background:#f7fafc;color:#718096}
+.btn{padding:8px 16px;font-size:12px;border:1.5px solid #cbd5e0;border-radius:8px;background:#fff;color:#1a202c;cursor:pointer;font-family:inherit;font-weight:500;transition:all .15s}
+.btn:hover{background:#f7fafc;border-color:#a0aec0}
+.btn-p{background:#2b6cb0;color:#fff;border-color:#2b6cb0}.btn-p:hover{background:#2c5282;border-color:#2c5282}
+.btn-g{background:#276749;color:#fff;border-color:#276749}.btn-g:hover{background:#22543d}
+.btn-sm{padding:4px 10px;font-size:11px}
+.btn-danger{color:#c53030;border-color:#fc8181}.btn-danger:hover{background:#fff5f5}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.divider{height:1px;background:#e2e8f0;margin:12px 0}
+.sec-label{font-size:10px;font-weight:700;color:#4a5568;text-transform:uppercase;letter-spacing:.06em;margin:14px 0 8px;display:flex;align-items:center;gap:8px}
+.sec-label::after{content:'';flex:1;height:1px;background:#e2e8f0}
+.badge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600}
+.b-blue{background:#ebf8ff;color:#2b6cb0;border:1px solid #bee3f8}
+.b-green{background:#f0fff4;color:#276749;border:1px solid #9ae6b4}
+.b-amber{background:#fffbeb;color:#b7791f;border:1px solid #fbd38d}
+.b-red{background:#fff5f5;color:#c53030;border:1px solid #fc8181}
+.alert-ok{padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:8px;background:#f0fff4;color:#276749;border:1px solid #9ae6b4}
+.alert-warn{padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:8px;background:#fffbeb;color:#b7791f;border:1px solid #fbd38d}
+.alert-info{padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:8px;background:#ebf8ff;color:#2b6cb0;border:1px solid #bee3f8}
+.chart-wrap{position:relative;width:100%;height:220px;margin-bottom:.5rem}
+.chart-wrap-lg{position:relative;width:100%;height:280px;margin-bottom:.5rem}
+.empty{text-align:center;padding:2rem;color:#a0aec0;font-size:12px}
+.tbl-wrap{overflow-x:auto;border:1px solid #e2e8f0;border-radius:10px}
+.tbl{border-collapse:collapse;width:100%;min-width:800px;font-size:11px}
+.tbl th{background:#f7fafc;color:#4a5568;font-weight:600;padding:7px 8px;border-bottom:2px solid #e2e8f0;border-right:1px solid #e2e8f0;text-align:center;white-space:nowrap}
+.tbl td{padding:6px 8px;border-bottom:1px solid #f0f4f8;border-right:1px solid #f0f4f8;text-align:center;color:#1a202c;white-space:nowrap}
+.tbl tr:hover td{background:#f7fafc}
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:6px;font-size:11px;color:#718096}
+.legend-item{display:flex;align-items:center;gap:5px}
+.drop-zone{border:2px dashed #cbd5e0;border-radius:12px;padding:2rem 1rem;text-align:center;cursor:pointer;background:#f7fafc;transition:all .2s}
+.drop-zone:hover,.drop-zone.over{border-color:#3182ce;background:#ebf8ff}
+.sync-indicator{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 9px;border-radius:20px;font-weight:500}
+.sync-ok{background:#f0fff4;color:#276749;border:1px solid #9ae6b4}
+.sync-err{background:#fff5f5;color:#c53030;border:1px solid #fc8181}
+.sync-ing{background:#fffbeb;color:#b7791f;border:1px solid #fbd38d}
+.frow{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f0f4f8;font-size:12px}
+.frow:last-child{border-bottom:none}
+.flabel{color:#718096;flex:1;padding-right:8px}
+.fval{font-weight:600;color:#1a202c}
+.ftotal{background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+.costo-hero{border-radius:12px;padding:1.25rem;color:#fff;margin-bottom:1rem}
+.costo-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.costo-tbl th{background:#f7fafc;padding:6px 10px;border:1px solid #e2e8f0;text-align:center;font-weight:600;color:#4a5568}
+.costo-tbl td{padding:6px 10px;border:1px solid #e2e8f0;text-align:center;color:#1a202c}
+.costo-tbl tr:hover td{background:#f7fafc}
+.pdf-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:6px;font-size:12px}
+.status-ok{color:#276749;font-weight:500}
+.status-warn{color:#b7791f;font-weight:500}
+.status-dup{color:#c53030;font-weight:500}
+.status-proc{color:#718096}
+.profile-card{background:#fff;border:2px solid #e2e8f0;border-radius:12px;padding:1rem 1.25rem;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:14px;margin-bottom:8px}
+.profile-card:hover{border-color:#3182ce;box-shadow:0 4px 12px rgba(49,130,206,.15);transform:translateY(-1px)}
+.profile-icon{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.app-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-radius:12px;margin-bottom:1rem;flex-wrap:wrap;gap:8px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.login-wrap{max-width:420px;margin:2rem auto}
+.user-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600}
 
+/* Login hero */
+.login-hero{background:linear-gradient(135deg,#1a365d 0%,#2b6cb0 50%,#2c7a7b 100%);border-radius:16px;padding:2rem;text-align:center;margin-bottom:1.5rem;color:#fff}
+.login-hero h1{font-size:22px;font-weight:700;margin-bottom:4px}
+.login-hero p{font-size:12px;opacity:.8}
+
+/* Animación entrada */
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.screen.active{animation:fadeIn .2s ease}
+
+/* Responsive */
+@media(max-width:600px){
+  .g3,.g4{grid-template-columns:1fr 1fr}
+  .g2{grid-template-columns:1fr}
+  .app-wrap{padding:.5rem}
+}
+</style>
+</head>
+<body>
+<div class="app-wrap">
+<div id="app">
+
+<!-- LOGIN -->
+<div id="screen-login" class="screen active">
+  <div class="login-wrap">
+    <div class="login-hero">
+      <div style="width:52px;height:52px;background:rgba(255,255,255,.15);border-radius:50%;margin:0 auto 12px;display:flex;align-items:center;justify-content:center">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </div>
+      <h1>Sistema eléctrico UDT</h1>
+      <p>Medidor Vetron N° 11987445 · Cliente 2532950 · Tarifa AT 4.3</p>
+    </div>
+
+    <div class="card" id="login-btn-wrap">
+      <button class="btn btn-p" onclick="iniciarGoogle()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:11px 16px;font-size:14px;font-weight:600">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#fff" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#fff" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#fff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Iniciar sesión con Google
+      </button>
+      <div style="font-size:11px;color:#718096;margin-top:8px;text-align:center">Los datos se sincronizan automáticamente con Google Sheets</div>
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid #e2e8f0">
+        <div style="font-size:10px;color:#a0aec0;text-align:center;margin-bottom:8px;font-weight:600;letter-spacing:.05em">USUARIOS CONFIGURADOS</div>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;padding:4px 0">
+            <span style="color:#4a5568">p.lavin@udt.cl</span><span class="badge b-blue">Operador</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;padding:4px 0">
+            <span style="color:#4a5568">j.provoste@udt.cl</span><span class="badge b-green">Administrador</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;padding:4px 0">
+            <span style="color:#4a5568">s.vergara@udt.cl</span><span class="badge b-green">Administrador</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;padding:4px 0">
+            <span style="color:#4a5568">c.poblete@udt.cl</span><span class="badge b-amber">Visualizador</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="login-perfil" style="display:none">
+      <div class="alert-ok" id="login-email-box" style="text-align:center;margin-bottom:12px"></div>
+      <div id="login-perfil-cards"></div>
+    </div>
+    <div id="login-status" style="margin-top:10px"></div>
+  </div>
+</div>
+
+<!-- OPERADOR -->
+<div id="screen-op" class="screen">
+  <div class="app-header" style="background:linear-gradient(135deg,#1a365d,#2b6cb0)">
+    <div>
+      <div style="font-size:14px;font-weight:700;color:#fff">Registro de lectura diaria</div>
+      <div style="font-size:10px;color:rgba(255,255,255,.75);margin-top:1px">Medidor Vetron N° 11987445 · UDT</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span id="op-user" style="font-size:11px;color:rgba(255,255,255,.9);font-weight:600"></span>
+      <span id="op-sync" class="sync-indicator sync-ok">● Sincronizado</span>
+      <button class="btn btn-sm" onclick="volverMenu()" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)">← Menú</button>
+      <button class="btn btn-sm" onclick="cerrarSesion()" style="background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.2)">Salir</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="opTab('nueva')">Nueva lectura</button>
+    <button class="tab" onclick="opTab('excel')">Cargar Excel</button>
+    <button class="tab" onclick="opTab('historial')">Mi historial</button>
+  </div>
+
+  <div id="op-nueva" class="subsec active">
+    <div class="card">
+      <div class="card-sub">Complete los campos según la pantalla del medidor. * obligatorio.</div>
+      <div class="sec-label">Identificación</div>
+      <div class="g3">
+        <div class="fg"><label>Fecha *</label><input type="date" id="l-f"/></div>
+        <div class="fg"><label>Hora real *</label><input type="time" id="l-hr" step="60"/></div>
+        <div class="fg"><label>Operador</label><input type="text" id="l-op" placeholder="Nombre"/></div>
+      </div>
+      <div class="sec-label">
+        <span style="background:#ebf8ff;color:#2b6cb0;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700">COL 2</span>
+        <span style="background:#ebf8ff;color:#2b6cb0;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700">COL 3</span>
+        Hora y fecha medidor
+      </div>
+      <div class="g2">
+        <div class="fg"><label>Hora medidor (col 2)</label><input type="text" id="l-hm" placeholder="HH:MM:SS"/></div>
+        <div class="fg"><label>Fecha medidor (col 3)</label><input type="date" id="l-fm"/></div>
+      </div>
+      <div class="sec-label">
+        <span style="background:#ebf8ff;color:#2b6cb0;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700">COL 4</span>
+        <span style="background:#ebf8ff;color:#2b6cb0;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700">COL 5</span>
+        Energía
+      </div>
+      <div class="g2">
+        <div class="fg"><label>Energía kWh * (col 4)</label><input type="number" id="l-kwh" step="0.01" min="0" oninput="calcDiff()"/></div>
+        <div class="fg"><label>Energía React kVArh (col 5)</label><input type="number" id="l-kvarh" step="1" min="0"/></div>
+      </div>
+      <div id="op-diff" style="margin-bottom:8px"></div>
+      <div class="sec-label">
+        <span style="background:#ebf8ff;color:#2b6cb0;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700">COL 6</span>
+        <span style="background:#ebf8ff;color:#2b6cb0;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700">COL 7</span>
+        <span style="background:#ebf8ff;color:#2b6cb0;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700">COL 8</span>
+        Demanda BD
+      </div>
+      <div class="g3">
+        <div class="fg"><label>BD kW (col 6)</label><input type="number" id="l-bkw" step="0.0001"/></div>
+        <div class="fg"><label>Hora DDA BD (col 7)</label><input type="text" id="l-bh" placeholder="HH:MM"/></div>
+        <div class="fg"><label>Fecha DDA BD (col 8)</label><input type="date" id="l-bf"/></div>
+      </div>
+      <div class="sec-label">
+        <span style="background:#fff5f0;color:#c05621;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700">COL 9</span>
+        <span style="background:#fff5f0;color:#c05621;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700">COL 10</span>
+        <span style="background:#fff5f0;color:#c05621;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700">COL 11</span>
+        Demanda HP
+      </div>
+      <div class="g3">
+        <div class="fg"><label>HP kW (col 9)</label><input type="number" id="l-hkw" step="0.0001"/></div>
+        <div class="fg"><label>Hora DDA HP (col 10)</label><input type="text" id="l-hh" placeholder="HH:MM"/></div>
+        <div class="fg"><label>Fecha DDA HP (col 11)</label><input type="date" id="l-hf"/></div>
+      </div>
+      <div class="sec-label">
+        <span style="background:#f7fafc;color:#4a5568;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700;border:1px solid #e2e8f0">COL 12</span>
+        <span style="background:#f7fafc;color:#4a5568;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700;border:1px solid #e2e8f0">COL 13</span>
+        <span style="background:#f7fafc;color:#4a5568;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700;border:1px solid #e2e8f0">COL 14</span>
+        Reset del medidor
+      </div>
+      <div class="g3">
+        <div class="fg"><label>Código reset (col 12)</label><input type="text" id="l-rc" placeholder="K12 M4"/></div>
+        <div class="fg"><label>Hora reset (col 13)</label><input type="text" id="l-rh" placeholder="HH:MM"/></div>
+        <div class="fg"><label>Fecha reset (col 14)</label><input type="text" id="l-rf" placeholder="96"/></div>
+      </div>
+      <div class="fg"><label>Observaciones</label><textarea id="l-obs" rows="2" placeholder="Anomalías, novedades..."></textarea></div>
+      <div class="btn-row">
+        <button class="btn btn-p" onclick="guardarLectura()">Guardar lectura</button>
+        <button class="btn" onclick="limpiarL()">Limpiar</button>
+      </div>
+    </div>
+  </div>
+
+
+  <div id="op-excel" class="subsec">
+    <div class="card">
+      <div class="card-title">Cargar planilla Excel del medidor</div>
+      <div class="card-sub">
+        Arrastre o seleccione el archivo Excel con las lecturas del medidor Vetron. 
+        La app detecta automáticamente el formato de la planilla y solo agrega las filas 
+        <strong>nuevas</strong> que no estén ya registradas (compara por fecha).
+      </div>
+      <div class="drop-zone" id="xl-dz" 
+        onclick="document.getElementById('xl-inp').click()" 
+        ondragover="xlOver(event)" ondragleave="xlLeave()" ondrop="xlDrop(event)">
+        <svg style="width:36px;height:36px;opacity:.4;display:block;margin:0 auto 8px" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="4" y="4" width="40" height="40" rx="4"/>
+          <path d="M14 16h20M14 24h20M14 32h12"/>
+          <path d="M30 28l8 8M38 28l-8 8" stroke-width="2"/>
+        </svg>
+        <p style="font-size:13px;color:#718096;margin-bottom:4px;font-weight:500">Arrastre el Excel aquí</p>
+        <span style="font-size:11px;color:#a0aec0">o haga clic para buscar — acepta .xlsx y .xls</span>
+      </div>
+      <input type="file" id="xl-inp" accept=".xlsx,.xls" style="display:none" onchange="handleExcel(this.files[0])"/>
+      <div id="xl-status" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card" id="xl-preview" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+        <div class="card-title" style="margin:0" id="xl-title">Filas detectadas</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span id="xl-badge" class="badge b-blue"></span>
+          <button class="btn btn-p" onclick="subirExcel()">Subir a Google Sheets</button>
+        </div>
+      </div>
+      <div id="xl-summary" style="margin-bottom:10px"></div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr>
+            <th>Fecha</th><th>Hora real</th><th>Hora med</th>
+            <th>kWh medidor</th><th>Consumo kWh (×150)</th>
+            <th>kVArh</th><th>BD kW</th><th>BD kWh (×150)</th>
+            <th>HP kW</th><th>HP kWh (×150)</th>
+            <th>Cód reset</th><th>Estado</th>
+          </tr></thead>
+          <tbody id="xl-tbody"></tbody>
+        </table>
+      </div>
+      <div class="btn-row" style="margin-top:10px">
+        <button class="btn btn-p" onclick="subirExcel()" id="xl-btn-subir">Subir filas nuevas a Google Sheets</button>
+        <button class="btn" onclick="clearExcel()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="op-historial" class="subsec">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+        <div style="font-size:13px;font-weight:600">Historial de lecturas</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="month" id="l-mes" style="width:auto;font-size:11px" onchange="renderOpHist()"/>
+          <button class="btn btn-sm" onclick="cargarLecturas()">↻ Actualizar</button>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr>
+            <th>Fecha</th><th>Hora real</th><th>Hora med</th>
+            <th>kWh</th><th>kVArh</th><th>BD kW</th><th>HP kW</th>
+            <th>Cód reset</th><th>Obs</th><th></th>
+          </tr></thead>
+          <tbody id="op-hist-body"></tbody>
+        </table>
+      </div>
+      <div id="op-hist-empty" class="empty" style="display:none">Sin lecturas registradas.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMINISTRADOR -->
+<div id="screen-adm" class="screen">
+  <div class="app-header" style="background:linear-gradient(135deg,#1c4532,#276749)">
+    <div>
+      <div style="font-size:14px;font-weight:700;color:#fff">Administración — Facturas CGE</div>
+      <div style="font-size:10px;color:rgba(255,255,255,.75);margin-top:1px">N° cliente 2532950 · AT 4.3 · Coronel · UDT</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span id="adm-user" style="font-size:11px;color:rgba(255,255,255,.9);font-weight:600"></span>
+      <span id="adm-sync" class="sync-indicator sync-ok">● Sincronizado</span>
+      <button class="btn btn-sm" onclick="volverMenu()" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)">← Menú</button>
+      <button class="btn btn-sm" onclick="cerrarSesion()" style="background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.2)">Salir</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="admTab('carga')">Cargar PDFs</button>
+    <button class="tab" onclick="admTab('facturas')">Facturas</button>
+    <button class="tab" onclick="admTab('costo')">Costo kWh</button>
+    <button class="tab" onclick="admTab('lecturas')">Lecturas operador</button>
+    <button class="tab" onclick="admTab('graficos')">Gráficos</button>
+    <button class="tab" onclick="admTab('analisis')">Análisis operador</button>
+    <button class="tab" onclick="admTab('proyeccion')">Proyección arrastre</button>
+  </div>
+
+  <div id="adm-carga" class="subsec active">
+    <div class="card">
+      <div class="card-title">Cargar facturas PDF — CGE</div>
+      <div class="card-sub">Arrastre uno o varios PDFs. Se leen automáticamente y se guardan en Google Sheets. Detección de duplicados incluida.</div>
+      <div class="drop-zone" id="dz" onclick="document.getElementById('pdf-inp').click()" ondragover="dzOver(event)" ondragleave="dzLeave()" ondrop="dzDrop(event)">
+        <svg style="width:36px;height:36px;opacity:.4;display:block;margin:0 auto 8px" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="8" y="4" width="32" height="40" rx="4"/><path d="M28 4v12h12M16 20h16M16 28h16M16 34h10"/></svg>
+        <p style="font-size:13px;color:#718096;margin-bottom:4px;font-weight:500">Arrastre PDFs aquí</p>
+        <span style="font-size:11px;color:#a0aec0">o haga clic — puede seleccionar varios a la vez</span>
+      </div>
+      <input type="file" id="pdf-inp" accept=".pdf" multiple style="display:none" onchange="handlePDFs(this.files)"/>
+      <div id="pdf-queue" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card" id="form-fac" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px">
+        <div class="card-title" style="margin:0" id="form-tit">Datos de la factura</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-sm" onclick="prevFac()" id="btn-prev" style="display:none">← Anterior</button>
+          <button class="btn btn-sm" onclick="nextFac()" id="btn-next" style="display:none">Siguiente →</button>
+        </div>
+      </div>
+      <div id="fac-alert" style="margin-bottom:8px"></div>
+      <div class="g3">
+        <div class="fg"><label>N° Factura</label><input type="text" id="p-num"/></div>
+        <div class="fg"><label>Fecha emisión</label><input type="date" id="p-fem"/></div>
+        <div class="fg"><label>Estado</label><select id="p-est"><option value="pendiente">Pendiente</option><option value="pagada">Pagada</option><option value="vencida">Vencida</option></select></div>
+      </div>
+      <div class="g3">
+        <div class="fg"><label>Período desde</label><input type="date" id="p-des"/></div>
+        <div class="fg"><label>Período hasta</label><input type="date" id="p-has"/></div>
+        <div class="fg"><label>Fecha vencimiento</label><input type="date" id="p-ven"/></div>
+      </div>
+      <div class="divider"></div>
+      <div class="sec-label">Consumo del período</div>
+      <div class="g4">
+        <div class="fg"><label>kWh consumidos</label><input type="number" id="p-kwh" oninput="recalcFac()"/></div>
+        <div class="fg"><label>kVArh</label><input type="number" id="p-kvarh"/></div>
+        <div class="fg"><label>Dda máx kW</label><input type="number" id="p-dmax" step="0.01"/></div>
+        <div class="fg"><label>Dda HP kW</label><input type="number" id="p-dhp" step="0.01"/></div>
+      </div>
+      <div class="divider"></div>
+      <div class="sec-label">Cargos del servicio ($)</div>
+      <div class="g2">
+        <div class="fg"><label>Administración servicio</label><input type="number" id="p-adms" oninput="recalcFac()"/></div>
+        <div class="fg"><label>Transporte electricidad</label><input type="number" id="p-trp" oninput="recalcFac()"/></div>
+      </div>
+      <div class="g2">
+        <div class="fg"><label>Cargo servicio público</label><input type="number" id="p-csp" oninput="recalcFac()"/></div>
+        <div class="fg"><label>Fondo estabilización Ley 21.472</label><input type="number" id="p-fest" oninput="recalcFac()"/></div>
+      </div>
+      <div class="g2">
+        <div class="fg"><label>Electricidad consumida ($)</label><input type="number" id="p-elec" oninput="recalcFac()"/></div>
+        <div class="fg"><label>Arriendo medidor</label><input type="number" id="p-arr" oninput="recalcFac()"/></div>
+      </div>
+      <div class="divider"></div>
+      <div class="sec-label">Cargos por demanda ($)</div>
+      <div class="g2">
+        <div class="fg"><label>Demanda máx. suministrada ($)</label><input type="number" id="p-cdmax" oninput="recalcFac()"/></div>
+        <div class="fg"><label>Demanda HP horas punta ($)</label><input type="number" id="p-cdhp" oninput="recalcFac()"/></div>
+      </div>
+      <div class="divider"></div>
+      <div class="sec-label">Totales ($) <span style="font-size:10px;color:#a0aec0;font-weight:400;text-transform:none">— Total exento/neto completar manualmente</span></div>
+      <div class="g4">
+        <div class="fg"><label>Total exento</label><input type="number" id="p-ext"/></div>
+        <div class="fg"><label>Total neto</label><input type="number" id="p-net"/></div>
+        <div class="fg"><label>IVA 19%</label><input type="number" id="p-iva"/></div>
+        <div class="fg"><label>Total a pagar *</label><input type="number" id="p-tot" oninput="recalcFac()"/></div>
+      </div>
+      <div class="divider"></div>
+      <div class="sec-label">Valor administrativo</div>
+      <div class="g3">
+        <div class="fg"><label>Tipo cálculo</label><select id="adm-tipo" onchange="recalcFac()"><option value="pct">% sobre total</option><option value="fijo">Monto fijo</option><option value="kwh">$ por kWh</option></select></div>
+        <div class="fg"><label>Valor</label><input type="number" id="adm-val" value="5" step="0.1" oninput="recalcFac()"/></div>
+        <div class="fg"><label>Valor adm. calculado ($)</label><input type="number" id="p-admc" readonly/></div>
+      </div>
+      <div id="fac-prev" style="margin:8px 0"></div>
+      <div class="fg"><label>Observaciones</label><textarea id="p-obs" rows="2"></textarea></div>
+      <div class="btn-row">
+        <button class="btn btn-g" onclick="guardarFactura(false)" id="btn-guardar">Guardar en Google Sheets</button>
+        <button class="btn btn-g" onclick="guardarFactura(true)" id="btn-guardar-sig" style="display:none">Guardar y continuar →</button>
+        <button class="btn" onclick="clearFacForm()">Limpiar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="adm-facturas" class="subsec">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+        <div style="font-size:13px;font-weight:600">Facturas registradas — orden por fecha</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sm" onclick="cargarFacturas()">↻ Actualizar</button>
+          <button class="btn btn-sm" onclick="exportCSV()">Exportar CSV</button>
+        </div>
+      </div>
+      <div id="fac-list"></div>
+    </div>
+  </div>
+
+  <div id="adm-costo" class="subsec">
+    <div id="costo-empty-adm" class="empty">Registre al menos una factura para calcular el costo interno.</div>
+    <div id="costo-body-adm" style="display:none">
+      <div class="costo-hero" id="costo-hero-adm" style="background:linear-gradient(135deg,#1a365d,#2b6cb0,#276749)"></div>
+      <div class="metrics" id="costo-met-adm"></div>
+      <div class="card">
+        <div class="card-title">Desglose por período</div>
+        <div style="overflow-x:auto"><table class="costo-tbl"><thead><tr>
+          <th style="text-align:left">Factura</th><th>Período</th><th>kWh</th>
+          <th>Total ($)</th><th>$/kWh s/IVA</th><th>$/kWh c/IVA</th>
+          <th>Energía $/kWh</th><th>HP $/kWh</th>
+        </tr></thead><tbody id="costo-tbody"></tbody>
+        <tfoot id="costo-tfoot"></tfoot></table></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Componentes del costo promedio por kWh</div>
+        <div id="costo-barras"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Evolución costo $/kWh entre períodos</div>
+        <div class="chart-wrap"><canvas id="g-costo" role="img" aria-label="Evolución costo kWh"></canvas></div>
+        <div class="legend">
+          <div class="legend-item"><span style="width:10px;height:10px;border-radius:50%;background:#2b6cb0;display:inline-block"></span><span>$/kWh total s/IVA</span></div>
+          <div class="legend-item"><span style="width:10px;height:10px;border-radius:50%;background:#e53e3e;display:inline-block"></span><span>$/kWh solo energía</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Simulador de cobro interno</div>
+        <div class="card-sub">Ingrese los kWh de un área o equipo para calcular el cargo a imputar.</div>
+        <div class="g3">
+          <div class="fg"><label>Consumo (kWh)</label><input type="number" id="sim-kwh" placeholder="500" oninput="simular()"/></div>
+          <div class="fg"><label>Tarifa a usar</label><select id="sim-tipo" onchange="simular()"><option value="siva">$/kWh total sin IVA</option><option value="civa">$/kWh total con IVA</option><option value="elec">$/kWh solo energía</option></select></div>
+          <div class="fg"><label>Total a cobrar ($)</label><input type="number" id="sim-res" readonly/></div>
+        </div>
+        <div id="sim-det" style="font-size:11px;color:#718096;margin-top:4px"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="adm-lecturas" class="subsec">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+        <div style="font-size:13px;font-weight:600">Lecturas del operador — en tiempo real desde Google Sheets</div>
+        <button class="btn btn-sm" onclick="cargarLecturas()">↻ Actualizar</button>
+      </div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr>
+            <th>Fecha</th><th>Hora real</th><th>Hora med</th><th>Fecha med</th>
+            <th>kWh</th><th>kVArh</th><th>BD kW</th><th>Hora BD</th><th>Fec BD</th>
+            <th>HP kW</th><th>Hora HP</th><th>Fec HP</th><th>Cód reset</th><th>Hr reset</th><th>Fec reset</th><th>Obs</th>
+          </tr></thead>
+          <tbody id="adm-lec-body"></tbody>
+        </table>
+      </div>
+      <div id="adm-lec-empty" class="empty" style="display:none">Sin lecturas del operador aún.</div>
+    </div>
+  </div>
+
+  <div id="adm-graficos" class="subsec">
+    <div id="graf-empty" class="empty">Registre facturas para ver los gráficos.</div>
+    <div id="graf-body" style="display:none">
+      <div class="metrics" id="graf-met"></div>
+      <div class="card"><div class="card-title">Consumo mensual (kWh)</div><div class="chart-wrap"><canvas id="g-kwh" role="img" aria-label="kWh mensual"></canvas></div></div>
+      <div class="card"><div class="card-title">Pago por energía ($)</div><div class="chart-wrap"><canvas id="g-elec" role="img" aria-label="Pago energía"></canvas></div></div>
+      <div class="card"><div class="card-title">Demanda hora punta leída (kW)</div><div class="chart-wrap"><canvas id="g-hp" role="img" aria-label="Dda HP kW"></canvas></div></div>
+      <div class="card"><div class="card-title">Pago hora punta ($)</div><div class="chart-wrap"><canvas id="g-chp" role="img" aria-label="Pago HP"></canvas></div></div>
+      <div class="card">
+        <div class="card-title">Consumo vs hora punta + sobrecosto por arrastre</div>
+        <div class="chart-wrap-lg"><canvas id="g-comb" role="img" aria-label="Energía vs HP arrastre"></canvas></div>
+        <div class="legend">
+          <div class="legend-item"><span style="width:10px;height:10px;border-radius:50%;background:#1f77b4;display:inline-block"></span><span>Energía ($)</span></div>
+          <div class="legend-item"><span style="width:10px;height:10px;border-radius:50%;background:#ff7f0e;display:inline-block"></span><span>Hora punta ($)</span></div>
+          <div class="legend-item"><span style="width:12px;height:10px;border-radius:3px;background:rgba(174,199,232,.6);display:inline-block"></span><span>Sobrecosto arrastre</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+  <!-- ANÁLISIS OPERADOR -->
+  <div id="adm-analisis" class="subsec">
+    <div class="card">
+      <div class="card-title">Análisis de lecturas del operador</div>
+      <div class="card-sub">Seleccione un rango de fechas para calcular el consumo total, diferencias de energía reactiva y alertas de peak hora punta. Factor constante: <strong>150</strong>.</div>
+      <div class="g3" style="margin-bottom:10px">
+        <div class="fg"><label>Fecha inicio</label><input type="date" id="an-desde" onchange="renderAnalisis()"/></div>
+        <div class="fg"><label>Fecha fin</label><input type="date" id="an-hasta" onchange="renderAnalisis()"/></div>
+        <div class="fg" style="justify-content:flex-end;padding-top:18px">
+          <button class="btn btn-p btn-sm" onclick="renderAnalisis()">Calcular</button>
+        </div>
+      </div>
+    </div>
+    <div id="an-empty" class="empty" style="display:none">Sin lecturas para el período seleccionado.</div>
+    <div id="an-body" style="display:none">
+      <div class="metrics" id="an-metrics"></div>
+      <div id="an-alertas" style="margin-bottom:1rem"></div>
+      <div class="card">
+        <div class="card-title">Consumo diario (kWh) — últimos 15 días</div>
+        <div class="chart-wrap"><canvas id="g-an-kwh" role="img" aria-label="Consumo diario kWh"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Peak hora punta BD (kWh) — últimos 15 días</div>
+        <div class="chart-wrap"><canvas id="g-an-bd" role="img" aria-label="Peak hora punta kWh"></canvas></div>
+        <div class="legend">
+          <div class="legend-item"><span style="width:10px;height:10px;border-radius:50%;background:#2b6cb0;display:inline-block"></span><span>Normal</span></div>
+          <div class="legend-item"><span style="width:10px;height:10px;border-radius:50%;background:#c53030;display:inline-block"></span><span>Subida &gt;10% día anterior</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Diferencia energía reactiva diaria (kVArh)</div>
+        <div class="chart-wrap"><canvas id="g-an-reac" role="img" aria-label="Diferencia energía reactiva"></canvas></div>
+        <div class="legend">
+          <div class="legend-item"><span style="width:10px;height:10px;border-radius:50%;background:#276749;display:inline-block"></span><span>Normal &lt;0.3</span></div>
+          <div class="legend-item"><span style="width:10px;height:10px;border-radius:50%;background:#b7791f;display:inline-block"></span><span>Alerta 0.3–0.5</span></div>
+          <div class="legend-item"><span style="width:10px;height:10px;border-radius:50%;background:#c53030;display:inline-block"></span><span>Crítico &gt;0.5</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Detalle del período</div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr>
+              <th>Fecha</th><th>Energía kWh</th><th>Consumo kWh (×150)</th>
+              <th>kVArh</th><th>Dif. reactiva</th><th>Estado reactiva</th>
+              <th>BD kW</th><th>BD kWh (×150)</th><th>Peak BD</th>
+            </tr></thead>
+            <tbody id="an-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROYECCIÓN ARRASTRE -->
+  <div id="adm-proyeccion" class="subsec">
+    <div id="proy-empty" class="empty">Registre al menos 2 facturas para generar la proyección de arrastre.</div>
+    <div id="proy-body" style="display:none">
+      <div class="card">
+        <div class="card-sub">Proyección basada en regresión lineal + promedio móvil 3 períodos + factor estacional verano/invierno. Ajuste el escenario con el deslizador.</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="font-size:11px;color:#718096;min-width:70px">Optimista</span>
+          <input type="range" min="-1" max="1" step="0.1" value="0" id="esc-slider" oninput="updateEsc(this.value)" style="flex:1"/>
+          <span style="font-size:11px;color:#718096;min-width:60px;text-align:right">Pesimista</span>
+          <span style="font-size:12px;font-weight:600;min-width:80px;text-align:right;color:#1a202c" id="esc-lbl">Base</span>
+        </div>
+      </div>
+      <div class="metrics" id="proy-met"></div>
+      <div class="card">
+        <div class="card-title">Demanda HP — histórico + proyección 12 meses (kW)</div>
+        <div class="chart-wrap-lg"><canvas id="p-kw" role="img" aria-label="Proyección HP kW 12 meses"></canvas></div>
+        <div class="legend">
+          <div class="legend-item"><span style="width:10px;height:10px;border-radius:50%;background:#2b6cb0;display:inline-block"></span><span>Histórico real</span></div>
+          <div class="legend-item"><span style="width:18px;height:2px;border-top:2px dashed #c05621;display:inline-block"></span><span>Proyección</span></div>
+          <div class="legend-item"><span style="width:12px;height:10px;border-radius:3px;background:rgba(192,86,33,.15);display:inline-block"></span><span>Banda confianza</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Proyección costo hora punta ($) — cobro por arrastre estimado</div>
+        <div class="chart-wrap"><canvas id="p-clp" role="img" aria-label="Proyección costo HP CLP"></canvas></div>
+        <div class="legend">
+          <div class="legend-item"><span style="width:10px;height:10px;border-radius:50%;background:#2b6cb0;display:inline-block"></span><span>Histórico costo HP ($)</span></div>
+          <div class="legend-item"><span style="width:10px;height:10px;border-radius:50%;background:#c05621;display:inline-block"></span><span>Proyectado ($)</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Alertas y recomendaciones</div>
+        <div id="proy-insights"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Tabla de proyección mensual — próximos 12 meses</div>
+        <div style="overflow-x:auto">
+          <table class="costo-tbl">
+            <thead><tr>
+              <th style="text-align:left">Mes</th><th>HP proy. (kW)</th>
+              <th>Mín (kW)</th><th>Máx (kW)</th>
+              <th>Costo HP est. ($)</th><th>vs. prom. hist.</th><th>Riesgo</th>
+            </tr></thead>
+            <tbody id="proy-tbl"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- VISUALIZADOR -->
+<div id="screen-vis" class="screen">
+  <div class="app-header" style="background:linear-gradient(135deg,#744210,#b7791f)">
+    <div>
+      <div style="font-size:14px;font-weight:700;color:#fff">Reportes eléctricos — UDT</div>
+      <div style="font-size:10px;color:rgba(255,255,255,.75);margin-top:1px">Solo lectura · Medidor Vetron N° 11987445</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span id="vis-user" style="font-size:11px;color:rgba(255,255,255,.9);font-weight:600"></span>
+      <span id="vis-sync" class="sync-indicator sync-ok">● Sincronizado</span>
+      <button class="btn btn-sm" onclick="volverMenu()" style="background:rgba(0,0,0,.1);color:#333;border-color:rgba(0,0,0,.15)">← Menú</button>
+      <button class="btn btn-sm" onclick="cerrarSesion()" style="background:rgba(0,0,0,.07);color:#555;border-color:rgba(0,0,0,.1)">Salir</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="visTab('resumen')">Resumen</button>
+    <button class="tab" onclick="visTab('graficos')">Gráficos</button>
+    <button class="tab" onclick="visTab('costo')">Costo kWh</button>
+  </div>
+  <div id="vis-resumen" class="subsec active">
+    <div class="metrics" id="vis-met"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="card"><div class="card-title">Últimas lecturas del operador</div><div id="vis-lec"></div></div>
+      <div class="card"><div class="card-title">Última factura registrada</div><div id="vis-fac"></div></div>
+    </div>
+  </div>
+  <div id="vis-graficos" class="subsec">
+    <div id="vis-graf-empty" class="empty">Sin datos suficientes.</div>
+    <div id="vis-graf-body" style="display:none">
+      <div class="card"><div class="card-title">Consumo mensual (kWh)</div><div class="chart-wrap"><canvas id="vg-kwh" role="img" aria-label="kWh mensual"></canvas></div></div>
+      <div class="card"><div class="card-title">Costo total facturado ($)</div><div class="chart-wrap"><canvas id="vg-tot" role="img" aria-label="Total facturado"></canvas></div></div>
+      <div class="card"><div class="card-title">Consumo vs hora punta + arrastre</div><div class="chart-wrap-lg"><canvas id="vg-comb" role="img" aria-label="HP y arrastre"></canvas></div></div>
+    </div>
+  </div>
+  <div id="vis-costo" class="subsec">
+    <div id="vis-costo-empty" class="empty">Sin facturas registradas.</div>
+    <div id="vis-costo-body" style="display:none">
+      <div class="costo-hero" id="vis-costo-hero" style="background:linear-gradient(135deg,#1a365d,#276749)"></div>
+      <div class="metrics" id="vis-costo-met"></div>
+      <div class="card"><div class="card-title">Evolución costo $/kWh</div><div class="chart-wrap"><canvas id="vg-costo" role="img" aria-label="Costo kWh evolución"></canvas></div></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- #app -->
+</div><!-- .app-wrap -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+const pdfjsLib=window['pdfjs-dist/build/pdf'];
+if(pdfjsLib)pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+const CLIENT_ID='242678789774-fgg5kh94vv7hir3p72jmgpo08pm6hq3d.apps.googleusercontent.com';
+const SHEET_ID='1ZwRD8TQ2qWpD6zHJ9zLPTFvVReRelfWCn5uh7hpEP-s';
+const SCOPES='https://www.googleapis.com/auth/spreadsheets';
+const API='https://sheets.googleapis.com/v4/spreadsheets';
+const SH_LEC='Lecturas',SH_FAC='Facturas';
+
+const USUARIOS={
+  'jprovos@gmail.com':    {perfil:'adm', nombre:'J. Provoste'},
+  'p.lavin@udt.cl':    {perfil:'op',  nombre:'P. Lavín'},
+  'j.provoste@udt.cl': {perfil:'adm', nombre:'J. Provoste'},
+  's.vergara@udt.cl':  {perfil:'adm', nombre:'S. Vergara'},
+  'c.poblete@udt.cl':  {perfil:'vis', nombre:'C. Poblete'},
+};
+const PERFILES=[
+  {id:'op',  label:'Operador eléctrico',desc:'Registra lecturas diarias del medidor Vetron',color:'#2b6cb0',badge:'b-blue',icon:'<circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>'},
+  {id:'adm', label:'Administrador',     desc:'Carga facturas CGE · gráficos · análisis',   color:'#276749',badge:'b-green',icon:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>'},
+  {id:'vis', label:'Visualizador',      desc:'Reportes y gráficos — solo lectura',         color:'#b7791f',badge:'b-amber',icon:'<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'},
+];
+
+let accessToken=null,userEmail='',userPerfil='',userName='';
+let lecturas=[],facturas=[],pendingPDFs=[],currentPDFIdx=0;
+const ch={};
+
+function g(id){return document.getElementById(id);}
+function gv(id){return g(id)?g(id).value:'';}
+function sv(id,val,warn){if(!g(id))return;g(id).value=val||'';if(warn!==undefined)g(id).style.borderColor=warn?'#f6ad55':'';}
+function fmt(n){return(Math.round(n)||0).toLocaleString('es-CL');}
+function fclp(n){return'$'+fmt(n);}
+function dc(id){if(ch[id]){ch[id].destroy();delete ch[id];}}
+function setSync(id,st,msg){const e=g(id);if(!e)return;e.className='sync-indicator sync-'+st;e.textContent=(st==='ok'?'● ':st==='ing'?'◌ ':'✕ ')+msg;}
+function hdr(){return{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'};}
+
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+function iniciarGoogle(){
+  g('login-status').innerHTML='<div class="alert-info">Conectando con Google...</div>';
+  const s=document.createElement('script');
+  s.src='https://accounts.google.com/gsi/client';
+  s.onload=()=>{
+    const tc=google.accounts.oauth2.initTokenClient({
+      client_id:CLIENT_ID,scope:SCOPES,
+      callback:(r)=>{
+        if(r.error){g('login-status').innerHTML=`<div class="alert-warn">Error Google: ${r.error}.<br>Posible causa: el origen de este archivo no está autorizado en Google Cloud Console. Intente con modo demo.</div>`;return;}
+        accessToken=r.access_token;
+        fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+accessToken}})
+          .then(res=>res.json()).then(d=>{userEmail=d.email||'';mostrarPerfiles();})
+          .catch(()=>{userEmail='';mostrarPerfiles();});
+      }
+    });
+    tc.requestAccessToken({prompt:'consent'});
+  };
+  s.onerror=()=>{g('login-status').innerHTML='<div class="alert-warn">No se pudo conectar con Google. Usando modo demo.</div>';setTimeout(modoDemo,1000);};
+  document.head.appendChild(s);
+}
+
+function mostrarPerfiles(){
+  g('login-btn-wrap').style.display='none';
+  g('login-perfil').style.display='block';
+  g('login-status').innerHTML='';
+  const u=USUARIOS[userEmail];
+  g('login-email-box').innerHTML=`Sesión iniciada como: <strong>${userEmail||'usuario'}</strong>`;
+  const cards=g('login-perfil-cards');
+  if(u){
+    const p=PERFILES.find(x=>x.id===u.perfil);
+    cards.innerHTML=`
+      <div style="font-size:12px;color:#718096;margin-bottom:8px;text-align:center">Tu perfil asignado:</div>
+      <div class="profile-card" onclick="entrar('${p.id}','${u.nombre}')">
+        <div class="profile-icon" style="background:${p.color}18;border:2px solid ${p.color}33">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${p.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p.icon}</svg>
+        </div>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:#1a202c">${u.nombre}</div>
+          <div style="font-size:11px;color:#718096;margin-top:2px">${p.desc}</div>
+          <div style="margin-top:5px"><span class="badge ${p.badge}">${p.label}</span></div>
+        </div>
+      </div>`;
+  } else {
+    cards.innerHTML=`<div class="alert-warn" style="margin-bottom:10px;font-size:11px">El email <strong>${userEmail}</strong> no está configurado. Seleccione un perfil de demostración:</div>`+
+    PERFILES.map(p=>`
+      <div class="profile-card" onclick="entrar('${p.id}','${p.label}')">
+        <div class="profile-icon" style="background:${p.color}18;border:2px solid ${p.color}33">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${p.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p.icon}</svg>
+        </div>
+        <div><div style="font-size:13px;font-weight:700;color:#1a202c">${p.label}</div><div style="font-size:11px;color:#718096">${p.desc}</div></div>
+      </div>`).join('');
+  }
+}
+
+function modoDemo(){
+  g('login-btn-wrap').style.display='none';
+  g('login-perfil').style.display='block';
+  g('login-email-box').innerHTML='<strong>Modo demo</strong> — datos guardados localmente en este navegador';
+  g('login-perfil-cards').innerHTML=`<div class="alert-info" style="margin-bottom:10px;font-size:11px">Sin conexión a Google Sheets. Los datos se guardan en este navegador.</div>`+
+  PERFILES.map(p=>`
+    <div class="profile-card" onclick="entrar('${p.id}','${p.label}')">
+      <div class="profile-icon" style="background:${p.color}18;border:2px solid ${p.color}33">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${p.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p.icon}</svg>
+      </div>
+      <div><div style="font-size:13px;font-weight:700;color:#1a202c">${p.label}</div><div style="font-size:11px;color:#718096">${p.desc}</div></div>
+    </div>`).join('');
+}
+
+async function entrar(perfil,nombre){
+  userPerfil=perfil;userName=nombre;
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  g('screen-'+perfil).classList.add('active');
+  const uid=g(perfil+'-user');if(uid)uid.textContent=nombre;
+  if(accessToken){await inicializarSheets();await cargarTodo();}
+  else{lecturas=JSON.parse(localStorage.getItem('udt_lec')||'[]');facturas=JSON.parse(localStorage.getItem('udt_fac')||'[]');}
+  if(perfil==='op'){if(g('l-f'))g('l-f').valueAsDate=new Date();opTab('nueva');}
+  if(perfil==='adm')admTab('carga');
+  if(perfil==='vis'){visTab('resumen');renderVis();}
+}
+
+function volverMenu(){
+  // Volver al menú de selección de perfil sin cerrar sesión Google
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  g('screen-login').classList.add('active');
+  // Mostrar perfiles si ya hay sesión activa
+  if(userEmail){
+    g('login-btn-wrap').style.display='none';
+    g('login-perfil').style.display='block';
+  }
+}
+
+function cerrarSesion(){
+  userPerfil='';userName='';accessToken=null;userEmail='';
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  g('screen-login').classList.add('active');
+  g('login-perfil').style.display='none';
+  g('login-btn-wrap').style.display='block';
+  g('login-status').innerHTML='';
+}
+
+// ── SHEETS ────────────────────────────────────────────────────────────────────
+async function inicializarSheets(){
+  if(!accessToken)return;
+  try{
+    const r=await fetch(`${API}/${SHEET_ID}`,{headers:hdr()});
+    const d=await r.json();
+    const nombres=(d.sheets||[]).map(s=>s.properties.title);
+    const reqs=[];
+    if(!nombres.includes(SH_LEC))reqs.push({addSheet:{properties:{title:SH_LEC}}});
+    if(!nombres.includes(SH_FAC))reqs.push({addSheet:{properties:{title:SH_FAC}}});
+    if(reqs.length)await fetch(`${API}/${SHEET_ID}:batchUpdate`,{method:'POST',headers:hdr(),body:JSON.stringify({requests:reqs})});
+    const hl=[['Fecha','Hora real','Hora medidor','Fecha medidor','kWh','kVArh','BD kW','Hora BD','Fecha BD','HP kW','Hora HP','Fecha HP','Cód reset','Hr reset','Fec reset','Operador','Obs','ID']];
+    const hf=[['N° Factura','Fecha emisión','Desde','Hasta','Estado','kWh','kVArh','Dda máx kW','Dda HP kW','Adm serv','Transporte','CSP','Fest','Elec $','Arriendo','cDdaMax $','cDdaHP $','AjAnt','AjAct','IVA','Exento','Neto','Total','Adm valor','Total con adm','Obs','ID']];
+    for(const [hoja,headers] of [[SH_LEC,hl],[SH_FAC,hf]]){
+      const rv=await fetch(`${API}/${SHEET_ID}/values/${hoja}!A1`,{headers:hdr()});
+      const dv=await rv.json();
+      if(!dv.values||!dv.values.length)await fetch(`${API}/${SHEET_ID}/values/${hoja}!A1:append?valueInputOption=USER_ENTERED`,{method:'POST',headers:hdr(),body:JSON.stringify({values:headers})});
+    }
+  }catch(e){console.warn('Sheets init:',e);}
+}
+
+async function sheetGet(hoja){
+  if(!accessToken)return[];
+  const r=await fetch(`${API}/${SHEET_ID}/values/${hoja}!A:Z`,{headers:hdr()});
+  const d=await r.json();return d.values||[];
+}
+
+async function sheetAppend(hoja,fila){
+  if(!accessToken){
+    // modo demo: guardar en localStorage
+    const key='udt_'+hoja.toLowerCase();
+    const arr=JSON.parse(localStorage.getItem(key)||'[]');
+    arr.push(fila);localStorage.setItem(key,JSON.stringify(arr));
+    return true;
+  }
+  try{
+    await fetch(`${API}/${SHEET_ID}/values/${hoja}!A:A:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,{method:'POST',headers:hdr(),body:JSON.stringify({values:[fila]})});
+    return true;
+  }catch(e){return false;}
+}
+
+async function cargarTodo(){await Promise.all([cargarLecturas(),cargarFacturas()]);}
+
+async function cargarLecturas(){
+  setSync(userPerfil+'-sync','ing','Sincronizando...');
+  try{
+    let rows=[];
+    if(accessToken){rows=await sheetGet(SH_LEC);}
+    else{rows=JSON.parse(localStorage.getItem('udt_lecturas')||'[]');}
+    if(rows.length>1)lecturas=rows.slice(1).filter(r=>r[0]).map(r=>({
+      fecha:r[0]||'',horaReal:r[1]||'',horaMed:r[2]||'',fechaMed:r[3]||'',
+      kwh:parseFloat(r[4])||0,kvarh:parseFloat(r[5])||0,
+      bdKw:parseFloat(r[6])||0,bdHora:r[7]||'',bdFecha:r[8]||'',
+      hpKw:parseFloat(r[9])||0,hpHora:r[10]||'',hpFecha:r[11]||'',
+      resetCod:r[12]||'',resetHora:r[13]||'',resetFecha:r[14]||'',
+      oper:r[15]||'',obs:r[16]||'',id:r[17]||''
+    }));
+    setSync(userPerfil+'-sync','ok','Sincronizado');
+    renderOpHist();renderAdmLec();
+  }catch(e){setSync(userPerfil+'-sync','err','Error sync');}
+}
+
+async function cargarFacturas(){
+  try{
+    let rows=[];
+    if(accessToken){rows=await sheetGet(SH_FAC);}
+    else{rows=JSON.parse(localStorage.getItem('udt_facturas')||'[]');}
+    if(rows.length>1)facturas=rows.slice(1).filter(r=>r[0]).map(r=>({
+      num:r[0]||'',fechaEm:r[1]||'',desde:r[2]||'',hasta:r[3]||'',estado:r[4]||'pendiente',
+      kwh:parseFloat(r[5])||0,kvarh:parseFloat(r[6])||0,
+      ddaMax:parseFloat(r[7])||0,ddaHp:parseFloat(r[8])||0,
+      admServ:parseFloat(r[9])||0,transp:parseFloat(r[10])||0,
+      csp:parseFloat(r[11])||0,fest:parseFloat(r[12])||0,
+      elec:parseFloat(r[13])||0,arr:parseFloat(r[14])||0,
+      cDdaMax:parseFloat(r[15])||0,cDdaHp:parseFloat(r[16])||0,
+      ajAnt:parseFloat(r[17])||0,ajAct:parseFloat(r[18])||0,
+      iva:parseFloat(r[19])||0,exento:parseFloat(r[20])||0,neto:parseFloat(r[21])||0,
+      total:parseFloat(r[22])||0,admValor:parseFloat(r[23])||0,
+      totalConAdm:parseFloat(r[24])||0,obs:r[25]||'',id:r[26]||''
+    }));
+    renderFacList();renderCosto();renderGraf();renderVis();
+  }catch(e){console.warn('Error facturas:',e);}
+}
+
+// ── TABS ──────────────────────────────────────────────────────────────────────
+function opTab(t){
+  g('screen-op').querySelectorAll('.tab').forEach((x,i)=>x.classList.toggle('active',['nueva','excel','historial'][i]===t));
+  g('screen-op').querySelectorAll('.subsec').forEach(x=>x.classList.remove('active'));
+  g('op-'+t).classList.add('active');
+  if(t==='historial')renderOpHist();
+  if(t==='excel')clearExcel();
+}
+function admTab(t){
+  g('screen-adm').querySelectorAll('.tab').forEach((x,i)=>x.classList.toggle('active',['carga','facturas','costo','lecturas','graficos','analisis','proyeccion'][i]===t));
+  g('screen-adm').querySelectorAll('.subsec').forEach(x=>x.classList.remove('active'));
+  g('adm-'+t).classList.add('active');
+  if(t==='facturas')renderFacList();
+  if(t==='costo')renderCosto();
+  if(t==='lecturas')renderAdmLec();
+  if(t==='graficos')renderGraf();
+  if(t==='analisis')initAnalisis();
+  if(t==='proyeccion')renderProy();
+}
+function visTab(t){
+  g('screen-vis').querySelectorAll('.tab').forEach((x,i)=>x.classList.toggle('active',['resumen','graficos','costo'][i]===t));
+  g('screen-vis').querySelectorAll('.subsec').forEach(x=>x.classList.remove('active'));
+  g('vis-'+t).classList.add('active');
+  renderVis();
+}
+
+// ── OPERADOR ──────────────────────────────────────────────────────────────────
+function calcDiff(){
+  const kwh=parseFloat(gv('l-kwh'))||0;
+  const prev=[...lecturas].sort((a,b)=>b.fecha.localeCompare(a.fecha))[0];
+  const el=g('op-diff');
+  if(kwh>0&&prev){const d=(kwh-prev.kwh).toFixed(2);el.innerHTML=`<div class="alert-ok">Anterior: <strong>${fmt(prev.kwh)}</strong> kWh (${prev.fecha}) — Diferencia: <strong>${d>0?'+':''}${d} kWh</strong></div>`;}
+  else el.innerHTML='';
+}
+
+async function guardarLectura(){
+  const fecha=gv('l-f'),kwh=parseFloat(gv('l-kwh'));
+  if(!fecha||isNaN(kwh)){alert('Fecha y kWh son obligatorios.');return;}
+  if(lecturas.find(l=>l.fecha===fecha)&&!confirm(`Ya existe lectura para ${fecha}. ¿Guardar de todas formas?`))return;
+  setSync('op-sync','ing','Guardando...');
+  const id=Date.now().toString();
+  const fila=[fecha,gv('l-hr'),gv('l-hm'),gv('l-fm'),kwh,parseFloat(gv('l-kvarh'))||0,
+    parseFloat(gv('l-bkw'))||0,gv('l-bh'),gv('l-bf'),parseFloat(gv('l-hkw'))||0,
+    gv('l-hh'),gv('l-hf'),gv('l-rc'),gv('l-rh'),gv('l-rf'),gv('l-op')||userName,gv('l-obs'),id];
+  const ok=await sheetAppend(SH_LEC,fila);
+  if(ok){
+    setSync('op-sync','ok','Guardado ✓');
+    lecturas.push({fecha,horaReal:fila[1],horaMed:fila[2],fechaMed:fila[3],kwh,kvarh:fila[5],bdKw:fila[6],bdHora:fila[7],bdFecha:fila[8],hpKw:fila[9],hpHora:fila[10],hpFecha:fila[11],resetCod:fila[12],resetHora:fila[13],resetFecha:fila[14],oper:fila[15],obs:fila[16],id});
+    limpiarL();renderOpHist();
+    alert('✓ Lectura guardada correctamente.');
+  }else{setSync('op-sync','err','Error al guardar');alert('Error al guardar. Verifique conexión.');}
+}
+
+function limpiarL(){
+  ['l-f','l-hr','l-op','l-hm','l-fm','l-kwh','l-kvarh','l-bkw','l-bh','l-bf','l-hkw','l-hh','l-hf','l-rc','l-rh','l-rf','l-obs'].forEach(id=>{if(g(id))g(id).value='';});
+  if(g('l-f'))g('l-f').valueAsDate=new Date();
+  if(g('op-diff'))g('op-diff').innerHTML='';
+}
+
+function renderOpHist(){
+  const mes=gv('l-mes');
+  const lista=[...lecturas].filter(l=>!mes||l.fecha.startsWith(mes)).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const body=g('op-hist-body'),empty=g('op-hist-empty');
+  if(!lista.length){body.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  body.innerHTML=lista.map((l,i,arr)=>{
+    const prev=arr[i+1];const diff=prev?(l.kwh-prev.kwh):null;
+    return`<tr>
+      <td style="font-weight:600;text-align:left">${l.fecha}</td><td>${l.horaReal||'—'}</td><td>${l.horaMed||'—'}</td>
+      <td style="font-weight:700;color:#2b6cb0">${fmt(l.kwh)}</td><td>${fmt(l.kvarh)}</td>
+      <td>${l.bdKw||'0'}</td><td style="color:#c05621;font-weight:600">${l.hpKw||'0'}</td>
+      <td>${l.resetCod||'—'}</td>
+      <td style="max-width:80px;overflow:hidden;text-overflow:ellipsis">${l.obs||'—'}</td>
+      <td><button class="btn btn-sm" onclick="editarLec('${l.id}')">Editar</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function editarLec(id){
+  const l=lecturas.find(x=>x.id===id);if(!l)return;
+  sv('l-f',l.fecha);sv('l-hr',l.horaReal);sv('l-op',l.oper);sv('l-hm',l.horaMed);sv('l-fm',l.fechaMed);
+  sv('l-kwh',l.kwh);sv('l-kvarh',l.kvarh);sv('l-bkw',l.bdKw);sv('l-bh',l.bdHora);sv('l-bf',l.bdFecha);
+  sv('l-hkw',l.hpKw);sv('l-hh',l.hpHora);sv('l-hf',l.hpFecha);
+  sv('l-rc',l.resetCod);sv('l-rh',l.resetHora);sv('l-rf',l.resetFecha);sv('l-obs',l.obs);
+  opTab('nueva');
+}
+
+function renderAdmLec(){
+  const body=g('adm-lec-body'),empty=g('adm-lec-empty');
+  const lista=[...lecturas].sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  if(!lista.length){body.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  body.innerHTML=lista.map(l=>`<tr>
+    <td style="font-weight:600">${l.fecha}</td><td>${l.horaReal||'—'}</td><td>${l.horaMed||'—'}</td><td>${l.fechaMed||'—'}</td>
+    <td style="font-weight:700;color:#2b6cb0">${fmt(l.kwh)}</td><td>${fmt(l.kvarh)}</td>
+    <td>${l.bdKw||'0'}</td><td>${l.bdHora||'—'}</td><td>${l.bdFecha||'—'}</td>
+    <td style="color:#c05621;font-weight:600">${l.hpKw||'0'}</td><td>${l.hpHora||'—'}</td><td>${l.hpFecha||'—'}</td>
+    <td>${l.resetCod||'—'}</td><td>${l.resetHora||'—'}</td><td>${l.resetFecha||'—'}</td>
+    <td style="max-width:80px;overflow:hidden;text-overflow:ellipsis">${l.obs||'—'}</td>
+  </tr>`).join('');
+}
+
+// ── PDF ───────────────────────────────────────────────────────────────────────
+function dzOver(e){e.preventDefault();g('dz').classList.add('over');}
+function dzLeave(){g('dz').classList.remove('over');}
+function dzDrop(e){e.preventDefault();dzLeave();handlePDFs(e.dataTransfer.files);}
+
+async function handlePDFs(files){
+  const lista=Array.from(files).filter(f=>f.type==='application/pdf');
+  if(!lista.length){alert('Seleccione archivos PDF.');return;}
+  g('pdf-queue').innerHTML='';g('form-fac').style.display='none';pendingPDFs=[];
+  lista.forEach((f,i)=>{g('pdf-queue').innerHTML+=`<div class="pdf-item" id="pi-${i}"><span style="font-weight:600">${f.name}</span><span class="status-proc" id="ps-${i}">Procesando...</span></div>`;});
+  for(let i=0;i<lista.length;i++){
+    try{
+      const ab=await lista[i].arrayBuffer();
+      const pdf=await pdfjsLib.getDocument({data:ab}).promise;
+      let txt='';
+      for(let p=1;p<=pdf.numPages;p++){const pg=await pdf.getPage(p);const ct=await pg.getTextContent();txt+=ct.items.map(x=>x.str).join(' ')+'\n';}
+      const r=parseCGE(txt);r._nombre=lista[i].name;
+      const dup=detectDup(r);
+      if(dup){r._dup=dup;g(`ps-${i}`).className='status-dup';g(`ps-${i}`).textContent=`⚠ Duplicado nivel ${dup.nivel}`;}
+      else{const nOk=[r.num,r.fechaEm,r.total,r.kwh,r.elec,r.cDdaHp,r.transp,r.iva].filter(v=>v).length;g(`ps-${i}`).className='status-ok';g(`ps-${i}`).textContent=`✓ ${nOk}/8 campos leídos`;}
+      pendingPDFs.push(r);
+    }catch(e){g(`ps-${i}`).className='status-warn';g(`ps-${i}`).textContent='Error — completar manualmente';pendingPDFs.push({_nombre:lista[i].name});}
+  }
+  currentPDFIdx=0;if(pendingPDFs.length)cargarEnForm(0);
+}
+
+function parseCGE(t){
+  function bN(pats){for(const p of pats){const m=t.match(new RegExp(p,'i'));if(m){return parseInt((m[1]||'').trim().replace(/\./g,''))||0;}}return 0;}
+  const mes={ene:'01',feb:'02',mar:'03',abr:'04',may:'05',jun:'06',jul:'07',ago:'08',sep:'09',oct:'10',nov:'11',dic:'12'};
+  const pf=(d,ms,a)=>`${a}-${mes[ms.toLowerCase().slice(0,3)]||'01'}-${d.padStart(2,'0')}`;
+  const mN=t.match(/N[°º]\s*(\d{6,})/i);
+  const mF=t.match(/Fecha de emisi[oó]n[:\s]*(\d{1,2})\s+(\w+)\s+(\d{4})/i);
+  const mV=t.match(/Fecha de vencimiento\s+(\d{1,2})\s+(\w+)\s+(\d{4})/i);
+  const mP=t.match(/(\d{2})\/(\d{2})\/(\d{4})\s*-\s*(\d{2})\/(\d{2})\/(\d{4})/);
+  return{
+    num:mN?mN[1]:'',fechaEm:mF?pf(mF[1],mF[2],mF[3]):'',fechaVen:mV?pf(mV[1],mV[2],mV[3]):'',
+    desde:mP?`${mP[3]}-${mP[2]}-${mP[1]}`:'',hasta:mP?`${mP[6]}-${mP[5]}-${mP[4]}`:'',
+    kwh:bN(['Electricidad Consumida\\s*\\(([ \\d.]+)\\s*kWh\\)']),
+    admServ:bN(['Administraci[oó]n del Servicio\\s*\\$\\s*(\\d+)']),
+    transp:bN(['Transporte de Electricidad\\s*\\$\\s*([\\d.]+)']),
+    csp:bN(['Servicio P[úu]blico\\s*\\$\\s*([\\d.]+)']),
+    fest:bN(['Ley 21\\.472\\s*\\$\\s*([\\d.]+)']),
+    elec:bN(['Electricidad Consumida.*?\\$\\s*([\\d.]+)']),
+    arr:bN(['Arriendo de Medidor\\s*\\$\\s*([\\d.]+)']),
+    cDdaMax:bN(['Suministrada\\s*\\([\\d,]+\\s*kW\\)\\s*\\$\\s*([\\d.]+)']),
+    cDdaHp:bN(['Horas Punta\\s*\\(\\d+\\s*kW\\)\\s*\\$\\s*([\\d.]+)']),
+    ajAnt:bN(['Mes Anterior\\s*\\$\\s*([\\d.]+)']),
+    ajAct:(()=>{const m=t.match(/Mes Actual\s*\$\s*-\s*(\d+)/i);return m?-parseInt(m[1]):0;})(),
+    iva:bN(['19%\\s*IVA\\s*\\$\\s*([\\d.]+)']),
+    total:bN(['Total a pagar\\s*\\$\\s*([\\d.]+)','Total a pagar\\s*\\$([\\d.]+)']),
+  };
+}
+
+function detectDup(n){
+  if(n.num){const e=facturas.find(f=>f.num&&f.num.trim()===String(n.num).trim());if(e)return{nivel:1,e,desc:`N° ${n.num} ya existe`};}
+  if(n.desde&&n.hasta){const e=facturas.find(f=>f.desde===n.desde&&f.hasta===n.hasta);if(e)return{nivel:2,e,desc:'Período ya registrado'};}
+  if(n.total&&n.fechaEm){const e=facturas.find(f=>Math.abs(f.total-n.total)<2&&f.fechaEm===n.fechaEm);if(e)return{nivel:3,e,desc:'Total y fecha coinciden'};}
+  return null;
+}
+
+function cargarEnForm(idx){
+  if(idx<0||idx>=pendingPDFs.length)return;
+  currentPDFIdx=idx;const r=pendingPDFs[idx];
+  g('form-tit').textContent=`Factura ${idx+1} de ${pendingPDFs.length}${r._nombre?' — '+r._nombre:''}`;
+  const multi=pendingPDFs.length>1;
+  g('btn-prev').style.display=multi?'inline-block':'none';
+  g('btn-next').style.display=multi?'inline-block':'none';
+  if(multi){g('btn-prev').disabled=idx===0;g('btn-next').disabled=idx===pendingPDFs.length-1;}
+  // Mostrar botón correcto según si hay más facturas pendientes
+  const hayMas=idx<pendingPDFs.length-1;
+  if(g('btn-guardar'))g('btn-guardar').style.display=hayMas?'none':'inline-block';
+  if(g('btn-guardar-sig'))g('btn-guardar-sig').style.display=hayMas?'inline-block':'none';
+  if(g('btn-guardar-sig'))g('btn-guardar-sig').textContent=`Guardar y continuar → (${idx+1}/${pendingPDFs.length})`;
+  sv('p-num',r.num,!r.num);sv('p-fem',r.fechaEm,!r.fechaEm);
+  sv('p-des',r.desde,!r.desde);sv('p-has',r.hasta,!r.hasta);sv('p-ven',r.fechaVen||'');
+  sv('p-kwh',r.kwh||'',!r.kwh);sv('p-adms',r.admServ||'');sv('p-trp',r.transp||'');
+  sv('p-csp',r.csp||'');sv('p-fest',r.fest||'');sv('p-elec',r.elec||'');sv('p-arr',r.arr||'');
+  sv('p-cdmax',r.cDdaMax||'');sv('p-cdhp',r.cDdaHp||'');sv('p-ajant',r.ajAnt||'');
+  sv('p-ajact',r.ajAct||'');sv('p-iva',r.iva||'');sv('p-tot',r.total||'',!r.total);
+  sv('p-ext','',true);sv('p-net','',true);
+  const nOk=[r.num,r.fechaEm,r.total,r.kwh,r.elec,r.cDdaHp,r.cDdaMax,r.transp,r.iva].filter(v=>v&&v!==0).length;
+  g('fac-alert').innerHTML=r._dup
+    ?`<div class="alert-warn">⚠ ${r._dup.desc} — verifique antes de guardar.</div>`
+    :`<div class="${nOk>=7?'alert-ok':'alert-warn'}">${nOk} de 9 campos leídos automáticamente.${nOk<9?' Complete los campos resaltados en naranja.':''}</div>`;
+  g('form-fac').style.display='block';recalcFac();
+}
+
+function prevFac(){if(currentPDFIdx>0)cargarEnForm(currentPDFIdx-1);}
+function nextFac(){if(currentPDFIdx<pendingPDFs.length-1)cargarEnForm(currentPDFIdx+1);}
+
+function recalcFac(){
+  const tot=parseFloat(gv('p-tot'))||0,kwh=parseFloat(gv('p-kwh'))||0;
+  const tipo=gv('adm-tipo'),val=parseFloat(gv('adm-val'))||0;
+  let adm=tipo==='pct'?tot*val/100:tipo==='fijo'?val:kwh*val;
+  sv('p-admc',Math.round(adm));
+  g('fac-prev').innerHTML=tot>0?`<div class="ftotal"><span style="font-size:12px;color:#718096">Total + valor administrativo</span><span style="font-size:16px;font-weight:700;color:#1a202c">${fclp(tot+Math.round(adm))}</span></div>`:'';
+}
+
+async function guardarFactura(continuar=false){
+  if(!gv('p-num')||!parseFloat(gv('p-tot'))){alert('N° factura y total son obligatorios.');return;}
+  // Verificar duplicado
+  const numActual=gv('p-num').trim();
+  const dup=facturas.find(f=>f.num&&f.num.trim()===numActual);
+  if(dup&&!confirm(`La factura N° ${numActual} ya existe. ¿Guardar de todas formas?`))return;
+  setSync('adm-sync','ing','Guardando...');
+  const tot=parseFloat(gv('p-tot'))||0,kwh=parseFloat(gv('p-kwh'))||0;
+  const tipo=gv('adm-tipo'),val=parseFloat(gv('adm-val'))||0;
+  let adm=tipo==='pct'?tot*val/100:tipo==='fijo'?val:kwh*val;
+  const id=Date.now().toString();
+  const fila=[gv('p-num'),gv('p-fem'),gv('p-des'),gv('p-has'),gv('p-est'),
+    kwh,parseFloat(gv('p-kvarh'))||0,parseFloat(gv('p-dmax'))||0,parseFloat(gv('p-dhp'))||0,
+    parseFloat(gv('p-adms'))||0,parseFloat(gv('p-trp'))||0,parseFloat(gv('p-csp'))||0,
+    parseFloat(gv('p-fest'))||0,parseFloat(gv('p-elec'))||0,parseFloat(gv('p-arr'))||0,
+    parseFloat(gv('p-cdmax'))||0,parseFloat(gv('p-cdhp'))||0,
+    parseFloat(gv('p-ajant'))||0,parseFloat(gv('p-ajact'))||0,
+    parseFloat(gv('p-iva'))||0,parseFloat(gv('p-ext'))||0,parseFloat(gv('p-net'))||0,
+    tot,Math.round(adm),tot+Math.round(adm),gv('p-obs'),id];
+  const ok=await sheetAppend(SH_FAC,fila);
+  if(ok){
+    setSync('adm-sync','ok','Guardado ✓');
+    // Marcar como guardada en la cola
+    if(pendingPDFs[currentPDFIdx])pendingPDFs[currentPDFIdx]._guardada=true;
+    const st=g(`ps-${currentPDFIdx}`);
+    if(st){st.className='status-ok';st.textContent='✓ Guardada';}
+    facturas.push({num:fila[0],fechaEm:fila[1],desde:fila[2],hasta:fila[3],estado:fila[4],kwh:fila[5],kvarh:fila[6],ddaMax:fila[7],ddaHp:fila[8],admServ:fila[9],transp:fila[10],csp:fila[11],fest:fila[12],elec:fila[13],arr:fila[14],cDdaMax:fila[15],cDdaHp:fila[16],ajAnt:fila[17],ajAct:fila[18],iva:fila[19],exento:fila[20],neto:fila[21],total:fila[22],admValor:fila[23],totalConAdm:fila[24],obs:fila[25],id});
+    renderFacList();renderCosto();renderGraf();
+    if(continuar&&currentPDFIdx<pendingPDFs.length-1){
+      // Avanzar automáticamente a la siguiente
+      cargarEnForm(currentPDFIdx+1);
+    } else {
+      const guardadas=pendingPDFs.filter(p=>p._guardada).length;
+      const total=pendingPDFs.length;
+      clearFacForm();
+      alert(`✓ ${guardadas} de ${total} factura(s) guardada(s) correctamente.`);
+    }
+  }else{setSync('adm-sync','err','Error');alert('Error al guardar. Verifique conexión y permisos en Google Sheets.');}
+}
+
+function clearFacForm(){g('form-fac').style.display='none';g('fac-alert').innerHTML='';g('fac-prev').innerHTML='';g('pdf-inp').value='';}
+
+function renderFacList(){
+  const el=g('fac-list');
+  if(!facturas.length){el.innerHTML='<div class="empty">Sin facturas. Cargue PDFs para comenzar.</div>';return;}
+  el.innerHTML=[...facturas].sort((a,b)=>b.fechaEm.localeCompare(a.fechaEm)).map(f=>`
+    <div style="padding:10px 14px;background:#f7fafc;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;align-items:center">
+        <span style="font-weight:700;font-size:13px">Factura N° ${f.num||'—'}</span>
+        <span class="badge ${f.estado==='pagada'?'b-green':f.estado==='vencida'?'b-red':'b-amber'}">${f.estado}</span>
+      </div>
+      <div style="font-size:11px;color:#718096;margin-top:3px">Emisión: ${f.fechaEm||'—'} · Período: ${f.desde||'?'} – ${f.hasta||'?'} · Venc: ${f.fechaVen||'—'}</div>
+      <div style="display:flex;gap:16px;margin-top:6px;font-size:12px;flex-wrap:wrap">
+        <span>kWh: <strong>${fmt(f.kwh)}</strong></span>
+        <span>Total: <strong style="color:#2b6cb0">${fclp(f.total)}</strong></span>
+        <span>Con adm: <strong>${fclp(f.totalConAdm)}</strong></span>
+      </div>
+    </div>`).join('');
+}
+
+function exportCSV(){
+  if(!facturas.length){alert('Sin facturas.');return;}
+  const h=['N° Factura','Fecha emisión','Desde','Hasta','Estado','kWh','Total','Adm','Total con adm'];
+  const csv=[h,...facturas.sort((a,b)=>b.fechaEm.localeCompare(a.fechaEm)).map(f=>[f.num,f.fechaEm,f.desde,f.hasta,f.estado,f.kwh,f.total,f.admValor,f.totalConAdm])].map(r=>r.join(',')).join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);a.download='Facturas_CGE_UDT.csv';a.click();
+}
+
+// ── COSTO kWh ─────────────────────────────────────────────────────────────────
+function costoKwh(f){
+  const sum=f.admServ+f.transp+f.csp+f.fest+f.elec+f.arr+f.cDdaMax+f.cDdaHp+(f.ajAnt||0);
+  const kwh=f.kwh||1;
+  const siva=sum>0?sum:Math.round(f.total/1.19);
+  return{siva,civa:Math.round(siva*1.19),pS:Math.round(siva/kwh),pC:Math.round(siva*1.19/kwh),pE:Math.round(f.elec/kwh),pH:Math.round(f.cDdaHp/kwh),pD:Math.round(f.cDdaMax/kwh)};
+}
+
+function renderCosto(){
+  const empty=g('costo-empty-adm'),body=g('costo-body-adm');
+  if(!facturas.length||!body){if(empty)empty.style.display='block';if(body)body.style.display='none';return;}
+  empty.style.display='none';body.style.display='block';
+  const sorted=[...facturas].sort((a,b)=>a.fechaEm.localeCompare(b.fechaEm));
+  const cs=sorted.map(f=>costoKwh(f));
+  const pS=Math.round(cs.reduce((s,c)=>s+c.pS,0)/cs.length);
+  const pC=Math.round(cs.reduce((s,c)=>s+c.pC,0)/cs.length);
+  const pE=Math.round(cs.reduce((s,c)=>s+c.pE,0)/cs.length);
+  const pH=Math.round(cs.reduce((s,c)=>s+c.pH,0)/cs.length);
+  const pD=Math.round(cs.reduce((s,c)=>s+c.pD,0)/cs.length);
+  g('costo-hero-adm').innerHTML=`
+    <div style="font-size:10px;color:rgba(255,255,255,.7);margin-bottom:4px;font-weight:600;letter-spacing:.05em">COSTO INTERNO PROMEDIO POR kWh · UDT · ${cs.length} PERÍODO(S)</div>
+    <div style="display:flex;gap:2rem;flex-wrap:wrap;align-items:flex-end">
+      <div><div style="font-size:10px;color:rgba(255,255,255,.7)">Sin IVA</div><div style="font-size:34px;font-weight:800;color:#fff;line-height:1">$${fmt(pS)}</div><div style="font-size:10px;color:rgba(255,255,255,.7)">/kWh</div></div>
+      <div><div style="font-size:10px;color:rgba(255,255,255,.7)">Con IVA 19%</div><div style="font-size:26px;font-weight:700;color:#fff;line-height:1">$${fmt(pC)}</div><div style="font-size:10px;color:rgba(255,255,255,.7)">/kWh</div></div>
+      <div style="flex:1;min-width:160px"><div style="font-size:11px;color:#fff;line-height:2;margin-top:4px">
+        Solo energía: <strong>$${fmt(pE)}/kWh</strong><br>
+        Cargo HP arrastre: <strong>$${fmt(pH)}/kWh</strong><br>
+        Cargo Dda máx: <strong>$${fmt(pD)}/kWh</strong>
+      </div></div>
+    </div>`;
+  g('costo-met-adm').innerHTML=`
+    <div class="metric"><div class="metric-label">Períodos</div><div class="metric-val">${cs.length}</div><div class="metric-unit">facturas</div></div>
+    <div class="metric"><div class="metric-label">kWh total</div><div class="metric-val">${fmt(sorted.reduce((s,f)=>s+f.kwh,0))}</div></div>
+    <div class="metric"><div class="metric-label">$/kWh s/IVA</div><div class="metric-val" style="color:#2b6cb0">$${fmt(pS)}</div></div>
+    <div class="metric"><div class="metric-label">$/kWh c/IVA</div><div class="metric-val">$${fmt(pC)}</div></div>
+    <div class="metric"><div class="metric-label">$/kWh energía</div><div class="metric-val" style="color:#276749">$${fmt(pE)}</div></div>`;
+  g('costo-tbody').innerHTML=sorted.map((f,i)=>`<tr>
+    <td style="text-align:left;font-weight:600">N° ${f.num}</td>
+    <td>${f.desde?f.desde.slice(0,7):'—'}</td><td>${fmt(f.kwh)}</td><td>${fclp(f.total)}</td>
+    <td style="font-weight:700;color:#2b6cb0">$${fmt(cs[i].pS)}</td><td>$${fmt(cs[i].pC)}</td>
+    <td style="color:#276749">$${fmt(cs[i].pE)}</td><td style="color:#c53030">$${fmt(cs[i].pH)}</td>
+  </tr>`).join('');
+  g('costo-tfoot').innerHTML=`<tr style="background:#f7fafc;font-weight:700">
+    <td style="text-align:left" colspan="4">Promedio general</td>
+    <td style="color:#2b6cb0">$${fmt(pS)}</td><td>$${fmt(pC)}</td>
+    <td style="color:#276749">$${fmt(pE)}</td><td style="color:#c53030">$${fmt(pH)}</td>
+  </tr>`;
+  const items=[{l:'Electricidad consumida',v:pE,c:'#276749'},{l:'Cargo HP arrastre',v:pH,c:'#c53030'},{l:'Cargo demanda máx.',v:pD,c:'#6b46c1'},{l:'Transporte electricidad',v:Math.round(cs.reduce((a,c,i)=>a+(sorted[i].transp/sorted[i].kwh),0)/cs.length),c:'#2b6cb0'},{l:'CSP + Fondo estab.',v:Math.round(cs.reduce((a,c,i)=>a+((sorted[i].csp+sorted[i].fest)/sorted[i].kwh),0)/cs.length),c:'#b7791f'}].filter(x=>x.v>0);
+  const tot2=items.reduce((s,x)=>s+x.v,0);
+  g('costo-barras').innerHTML=items.map(x=>`
+    <div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+        <span style="color:#4a5568;font-weight:500">${x.l}</span>
+        <span style="font-weight:700">$${fmt(x.v)}/kWh <span style="color:#a0aec0;font-weight:400">(${tot2>0?(x.v/tot2*100).toFixed(0):0}%)</span></span>
+      </div>
+      <div style="height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden">
+        <div style="height:100%;width:${tot2>0?Math.min(100,x.v/tot2*100):0}%;background:${x.c};border-radius:4px;transition:width .4s"></div>
+      </div>
+    </div>`).join('');
+  simular();
+  dc('g-costo');
+  const lbls=sorted.map(f=>f.desde?f.desde.slice(0,7):'?');
+  const lp={id:'lp_c',afterDatasetsDraw(chart){const ctx=chart.ctx;chart.data.datasets.forEach((ds,di)=>{const col=di===0?'#2b6cb0':'#c53030';chart.getDatasetMeta(di).data.forEach((pt,i)=>{const v=ds.data[i];if(!v)return;ctx.save();ctx.font='bold 10px Segoe UI';ctx.fillStyle=col;ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText('$'+fmt(v),pt.x,pt.y-5);ctx.restore();});});} };
+  ch['g-costo']=new Chart(g('g-costo').getContext('2d'),{type:'line',
+    data:{labels:lbls,datasets:[
+      {data:cs.map(c=>c.pS),borderColor:'#2b6cb0',backgroundColor:'rgba(43,108,176,.08)',pointBackgroundColor:'#2b6cb0',pointRadius:5,tension:0,fill:true,borderWidth:2.5},
+      {data:cs.map(c=>c.pE),borderColor:'#c53030',backgroundColor:'transparent',pointBackgroundColor:'#c53030',pointRadius:5,tension:0,borderWidth:2,borderDash:[5,3]}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{y:{beginAtZero:false,grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#718096',font:{size:10}},title:{display:true,text:'$/kWh',color:'#718096',font:{size:10}}},
+      x:{grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#718096',font:{size:10}}}}},
+    plugins:[lp]});
+}
+
+function simular(){
+  const kwh=parseFloat(gv('sim-kwh'))||0;if(!kwh||!facturas.length){sv('sim-res','');if(g('sim-det'))g('sim-det').textContent='';return;}
+  const cs=facturas.map(f=>costoKwh(f));
+  const tipo=gv('sim-tipo');
+  const t=tipo==='siva'?Math.round(cs.reduce((s,c)=>s+c.pS,0)/cs.length):tipo==='civa'?Math.round(cs.reduce((s,c)=>s+c.pC,0)/cs.length):Math.round(cs.reduce((s,c)=>s+c.pE,0)/cs.length);
+  sv('sim-res',Math.round(kwh*t));
+  if(g('sim-det'))g('sim-det').textContent=`${fmt(kwh)} kWh × $${fmt(t)}/kWh = ${fclp(Math.round(kwh*t))}`;
+}
+
+// ── GRÁFICOS ──────────────────────────────────────────────────────────────────
+function mkLine(id,labels,data,yLbl,color){
+  if(!g(id))return;dc(id);
+  const lp={id:'lp_'+id,afterDatasetsDraw(chart){const ctx=chart.ctx;chart.getDatasetMeta(0).data.forEach((pt,i)=>{const v=data[i];if(!v)return;ctx.save();ctx.font='bold 9px Segoe UI';ctx.fillStyle=color;ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(v>=1000?v.toLocaleString('es-CL'):String(v),pt.x,pt.y-4);ctx.restore();});}};
+  ch[id]=new Chart(g(id).getContext('2d'),{type:'line',
+    data:{labels,datasets:[{data,borderColor:color,backgroundColor:color+'18',pointBackgroundColor:color,pointRadius:5,tension:0,fill:true,borderWidth:2.5}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
+      scales:{y:{beginAtZero:false,grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#718096',font:{size:10},callback:v=>v>=1000000?(v/1000000).toFixed(1)+'M':v>=1000?(v/1000).toFixed(0)+'k':v},title:{display:true,text:yLbl,color:'#718096',font:{size:10}}},
+      x:{grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#718096',font:{size:10},maxRotation:45}}}},
+    plugins:[lp]});
+}
+
+function renderGraf(){
+  const sorted=[...facturas].sort((a,b)=>a.fechaEm.localeCompare(b.fechaEm));
+  const empty=g('graf-empty'),body=g('graf-body');
+  if(!sorted.length){if(empty)empty.style.display='block';if(body)body.style.display='none';return;}
+  if(empty)empty.style.display='none';if(body)body.style.display='block';
+  const lbls=sorted.map(f=>f.desde?f.desde.slice(0,7):'?');
+  const tK=sorted.reduce((s,f)=>s+f.kwh,0),tF=sorted.reduce((s,f)=>s+f.total,0),tH=sorted.reduce((s,f)=>s+f.cDdaHp,0);
+  const pS2=facturas.length?Math.round(facturas.map(f=>costoKwh(f).pS).reduce((a,b)=>a+b,0)/facturas.length):0;
+  if(g('graf-met'))g('graf-met').innerHTML=`
+    <div class="metric"><div class="metric-label">kWh total</div><div class="metric-val">${fmt(tK)}</div></div>
+    <div class="metric"><div class="metric-label">Total facturado</div><div class="metric-val" style="font-size:13px">${fclp(tF)}</div></div>
+    <div class="metric"><div class="metric-label">Pago HP total</div><div class="metric-val" style="font-size:13px">${fclp(tH)}</div></div>
+    <div class="metric"><div class="metric-label">$/kWh prom s/IVA</div><div class="metric-val">$${fmt(pS2)}</div></div>`;
+  mkLine('g-kwh',lbls,sorted.map(f=>f.kwh),'kWh','#1f77b4');
+  mkLine('g-elec',lbls,sorted.map(f=>f.elec),'CLP','#1f77b4');
+  mkLine('g-hp',lbls,sorted.map(f=>+f.ddaHp.toFixed(2)),'kW','#1f77b4');
+  mkLine('g-chp',lbls,sorted.map(f=>f.cDdaHp),'CLP','#1f77b4');
+  if(!g('g-comb'))return;
+  const minHP=sorted.length?Math.min(...sorted.map(f=>f.cDdaHp)):0;
+  dc('g-comb');
+  const cp={id:'cp2',afterDatasetsDraw(chart){const ctx=chart.ctx;[[0,'#1f77b4'],[1,'#ff7f0e']].forEach(([di,col])=>{chart.getDatasetMeta(di).data.forEach((pt,i)=>{const v=chart.data.datasets[di].data[i];if(!v)return;ctx.save();ctx.font='bold 9px Segoe UI';ctx.fillStyle=col;ctx.textAlign='center';ctx.textBaseline=di===0?'bottom':'top';ctx.fillText(v.toLocaleString('es-CL'),pt.x,di===0?pt.y-4:pt.y+4);ctx.restore();});});chart.getDatasetMeta(1).data.forEach((pt,i)=>{const s=sorted[i].cDdaHp-minHP;if(s<=0)return;ctx.save();ctx.font='9px Segoe UI';ctx.fillStyle='#2b6cb0';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText('+'+Math.round(s).toLocaleString('es-CL'),pt.x,pt.y-18);ctx.restore();});}};
+  ch['g-comb']=new Chart(g('g-comb').getContext('2d'),{type:'line',
+    data:{labels:lbls,datasets:[
+      {data:sorted.map(f=>f.elec),borderColor:'#1f77b4',backgroundColor:'transparent',pointBackgroundColor:'#1f77b4',pointRadius:5,tension:0,borderWidth:2.5,order:1},
+      {data:sorted.map(f=>f.cDdaHp),borderColor:'#ff7f0e',backgroundColor:'rgba(174,199,232,.4)',pointBackgroundColor:'#ff7f0e',pointRadius:5,tension:0,borderWidth:2.5,fill:'origin',order:2}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
+      scales:{y:{beginAtZero:false,grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#718096',font:{size:10},callback:v=>v>=1000000?(v/1000000).toFixed(1)+'M':(v/1000).toFixed(0)+'k'},title:{display:true,text:'CLP',color:'#718096',font:{size:10}}},
+      x:{grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#718096',font:{size:10},maxRotation:45}}}},
+    plugins:[cp]});
+}
+
+// ── VISUALIZADOR ──────────────────────────────────────────────────────────────
+function renderVis(){
+  if(!g('vis-met'))return;
+  const sorted=[...facturas].sort((a,b)=>a.fechaEm.localeCompare(b.fechaEm));
+  const ultF=sorted[sorted.length-1];
+  const ultLec=[...lecturas].sort((a,b)=>b.fecha.localeCompare(a.fecha)).slice(0,5);
+  const cs=sorted.map(f=>costoKwh(f));
+  const pS=cs.length?Math.round(cs.reduce((s,c)=>s+c.pS,0)/cs.length):0;
+  const pC=cs.length?Math.round(cs.reduce((s,c)=>s+c.pC,0)/cs.length):0;
+  g('vis-met').innerHTML=`
+    <div class="metric"><div class="metric-label">Facturas</div><div class="metric-val">${sorted.length}</div></div>
+    <div class="metric"><div class="metric-label">kWh total</div><div class="metric-val">${fmt(sorted.reduce((s,f)=>s+f.kwh,0))}</div></div>
+    <div class="metric"><div class="metric-label">Total facturado</div><div class="metric-val" style="font-size:13px">${fclp(sorted.reduce((s,f)=>s+f.total,0))}</div></div>
+    <div class="metric"><div class="metric-label">$/kWh s/IVA</div><div class="metric-val" style="color:#2b6cb0">$${fmt(pS)}</div></div>
+    <div class="metric"><div class="metric-label">Lecturas operador</div><div class="metric-val">${lecturas.length}</div></div>`;
+  g('vis-lec').innerHTML=ultLec.length?ultLec.map(l=>`
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f4f8;font-size:12px">
+      <span style="color:#718096">${l.fecha} ${l.horaReal||''}</span>
+      <span style="font-weight:700;color:#2b6cb0">${fmt(l.kwh)} kWh</span>
+      <span style="color:#c05621;font-size:11px">HP: ${l.hpKw||0} kW</span>
+    </div>`).join(''):'<div class="empty">Sin lecturas aún.</div>';
+  g('vis-fac').innerHTML=ultF?`
+    <div style="font-size:12px">
+      <div class="frow"><span class="flabel">N° Factura</span><span class="fval">${ultF.num}</span></div>
+      <div class="frow"><span class="flabel">Período</span><span class="fval">${ultF.desde||'?'} – ${ultF.hasta||'?'}</span></div>
+      <div class="frow"><span class="flabel">kWh consumidos</span><span class="fval">${fmt(ultF.kwh)}</span></div>
+      <div class="frow"><span class="flabel">Total factura</span><span class="fval" style="color:#2b6cb0">${fclp(ultF.total)}</span></div>
+      <div class="ftotal"><span style="font-size:11px;color:#718096">$/kWh promedio s/IVA</span><span style="font-size:20px;font-weight:800;color:#1a202c">$${fmt(pS)}</span></div>
+    </div>`:'<div class="empty">Sin facturas.</div>';
+  const vGE=g('vis-graf-empty'),vGB=g('vis-graf-body');
+  if(!sorted.length){if(vGE)vGE.style.display='block';if(vGB)vGB.style.display='none';}
+  else{
+    if(vGE)vGE.style.display='none';if(vGB)vGB.style.display='block';
+    const lbls=sorted.map(f=>f.desde?f.desde.slice(0,7):'?');
+    mkLine('vg-kwh',lbls,sorted.map(f=>f.kwh),'kWh','#2b6cb0');
+    mkLine('vg-tot',lbls,sorted.map(f=>f.total),'CLP','#276749');
+    if(g('vg-comb')){
+      dc('vg-comb');
+      ch['vg-comb']=new Chart(g('vg-comb').getContext('2d'),{type:'line',
+        data:{labels:lbls,datasets:[
+          {data:sorted.map(f=>f.elec),borderColor:'#1f77b4',backgroundColor:'transparent',pointBackgroundColor:'#1f77b4',pointRadius:4,tension:0,borderWidth:2.5,order:1},
+          {data:sorted.map(f=>f.cDdaHp),borderColor:'#ff7f0e',backgroundColor:'rgba(174,199,232,.4)',pointBackgroundColor:'#ff7f0e',pointRadius:4,tension:0,borderWidth:2.5,fill:'origin',order:2}
+        ]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+          scales:{y:{beginAtZero:false,grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#718096',font:{size:10},callback:v=>v>=1000000?(v/1000000).toFixed(1)+'M':(v/1000).toFixed(0)+'k'}},
+          x:{grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#718096',font:{size:10},maxRotation:45}}}}});
+    }
+  }
+  const vCE=g('vis-costo-empty'),vCB=g('vis-costo-body');
+  if(!cs.length){if(vCE)vCE.style.display='block';if(vCB)vCB.style.display='none';}
+  else{
+    if(vCE)vCE.style.display='none';if(vCB)vCB.style.display='block';
+    const pE=Math.round(cs.reduce((s,c)=>s+c.pE,0)/cs.length);
+    const pH=Math.round(cs.reduce((s,c)=>s+c.pH,0)/cs.length);
+    if(g('vis-costo-hero'))g('vis-costo-hero').innerHTML=`
+      <div style="font-size:10px;color:rgba(255,255,255,.7);margin-bottom:4px;font-weight:600">COSTO INTERNO PROMEDIO · UDT</div>
+      <div style="display:flex;gap:2rem;flex-wrap:wrap">
+        <div><div style="font-size:10px;color:rgba(255,255,255,.7)">Sin IVA</div><div style="font-size:30px;font-weight:800;color:#fff">$${fmt(pS)}</div><div style="font-size:10px;color:rgba(255,255,255,.7)">/kWh</div></div>
+        <div><div style="font-size:10px;color:rgba(255,255,255,.7)">Con IVA</div><div style="font-size:24px;font-weight:700;color:#fff">$${fmt(pC)}</div><div style="font-size:10px;color:rgba(255,255,255,.7)">/kWh</div></div>
+        <div style="flex:1;min-width:140px"><div style="font-size:11px;color:#fff;line-height:2;margin-top:4px">Energía: <strong>$${fmt(pE)}/kWh</strong><br>HP arrastre: <strong>$${fmt(pH)}/kWh</strong></div></div>
+      </div>`;
+    if(g('vis-costo-met'))g('vis-costo-met').innerHTML=`
+      <div class="metric"><div class="metric-label">Períodos</div><div class="metric-val">${cs.length}</div></div>
+      <div class="metric"><div class="metric-label">$/kWh s/IVA</div><div class="metric-val" style="color:#2b6cb0">$${fmt(pS)}</div></div>
+      <div class="metric"><div class="metric-label">$/kWh c/IVA</div><div class="metric-val">$${fmt(pC)}</div></div>
+      <div class="metric"><div class="metric-label">$/kWh energía</div><div class="metric-val" style="color:#276749">$${fmt(pE)}</div></div>
+      <div class="metric"><div class="metric-label">$/kWh cargo HP</div><div class="metric-val" style="color:#c53030">$${fmt(pH)}</div></div>`;
+    mkLine('vg-costo',sorted.map(f=>f.desde?f.desde.slice(0,7):'?'),cs.map(c=>c.pS),'$/kWh','#2b6cb0');
+  }
+}
+
+if(g('l-f'))g('l-f').valueAsDate=new Date();
+
+// ── ANÁLISIS OPERADOR ─────────────────────────────────────────────────────────
+const FACTOR = 150;
+
+function initAnalisis(){
+  // Inicializar fechas por defecto: últimos 15 días
+  const hoy = new Date();
+  const hace15 = new Date(hoy); hace15.setDate(hoy.getDate()-15);
+  if(!gv('an-desde')) sv('an-desde', hace15.toISOString().slice(0,10));
+  if(!gv('an-hasta')) sv('an-hasta', hoy.toISOString().slice(0,10));
+  if(!g('an-desde').value) g('an-desde').value = hace15.toISOString().slice(0,10);
+  if(!g('an-hasta').value) g('an-hasta').value = hoy.toISOString().slice(0,10);
+  renderAnalisis();
+}
+
+function renderAnalisis(){
+  const desde = gv('an-desde'), hasta = gv('an-hasta');
+  const empty = g('an-empty'), body = g('an-body');
+  const lista = [...lecturas]
+    .filter(l => (!desde || l.fecha >= desde) && (!hasta || l.fecha <= hasta))
+    .sort((a,b) => a.fecha.localeCompare(b.fecha));
+
+  if(!lista.length){ empty.style.display='block'; body.style.display='none'; return; }
+  empty.style.display='none'; body.style.display='block';
+
+  // Últimos 15 para gráficos
+  const ult15 = [...lecturas].sort((a,b)=>a.fecha.localeCompare(b.fecha)).slice(-15);
+
+  // Consumo total período = (último kWh - primer kWh) * 150
+  const primerKwh = lista[0].kwh, ultimoKwh = lista[lista.length-1].kwh;
+  const consumoTotal = (ultimoKwh - primerKwh) * FACTOR;
+
+  // Diferencias diarias
+  const diffs = lista.slice(1).map((l,i) => ({
+    fecha: l.fecha,
+    kwh: l.kwh,
+    kvarh: l.kvarh,
+    bdKw: l.bdKw || 0,
+    difKwh: (l.kwh - lista[i].kwh) * FACTOR,
+    difReac: Math.abs(l.kvarh - lista[i].kvarh),
+    difBd: ((l.bdKw||0) - (lista[i].bdKw||0)) * FACTOR,
+    bdKwh: (l.bdKw||0) * FACTOR,
+    prevBdKwh: (lista[i].bdKw||0) * FACTOR,
+  }));
+
+  const maxReac = diffs.length ? Math.max(...diffs.map(d=>d.difReac)) : 0;
+  const avgReac = diffs.length ? diffs.reduce((s,d)=>s+d.difReac,0)/diffs.length : 0;
+  const alertasBd = diffs.filter(d => d.prevBdKwh > 0 && d.bdKwh > d.prevBdKwh * 1.1);
+  const criticos = diffs.filter(d => d.difReac > 0.5);
+  const alertas = diffs.filter(d => d.difReac >= 0.3 && d.difReac <= 0.5);
+
+  // Métricas
+  g('an-metrics').innerHTML = `
+    <div class="metric"><div class="metric-label">Consumo total período</div><div class="metric-val">${fmt(Math.round(consumoTotal))}</div><div class="metric-unit">kWh (×150)</div></div>
+    <div class="metric"><div class="metric-label">Registros analizados</div><div class="metric-val">${lista.length}</div><div class="metric-unit">lecturas</div></div>
+    <div class="metric"><div class="metric-label">Dif. reactiva promedio</div><div class="metric-val">${avgReac.toFixed(3)}</div><div class="metric-unit">kVArh/día</div></div>
+    <div class="metric"><div class="metric-label">Dif. reactiva máxima</div><div class="metric-val" style="color:${maxReac>0.5?'#c53030':maxReac>=0.3?'#b7791f':'#276749'}">${maxReac.toFixed(3)}</div><div class="metric-unit">kVArh</div></div>
+    <div class="metric"><div class="metric-label">Alertas peak BD</div><div class="metric-val" style="color:${alertasBd.length?'#c53030':'#276749'}">${alertasBd.length}</div><div class="metric-unit">días &gt;10%</div></div>`;
+
+  // Panel alertas
+  let alHtml = '';
+  if(criticos.length) alHtml += `<div style="padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:6px;background:#fff5f5;color:#c53030;border:1px solid #fc8181">🔴 <strong>Crítico:</strong> ${criticos.length} día(s) con diferencia reactiva &gt;0.5 kVArh: ${criticos.map(d=>d.fecha).join(', ')}</div>`;
+  if(alertas.length) alHtml += `<div style="padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:6px;background:#fffbeb;color:#b7791f;border:1px solid #fbd38d">🟡 <strong>Alerta:</strong> ${alertas.length} día(s) con diferencia reactiva 0.3–0.5 kVArh: ${alertas.map(d=>d.fecha).join(', ')}</div>`;
+  if(alertasBd.length) alHtml += `<div style="padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:6px;background:#fff5f5;color:#c53030;border:1px solid #fc8181">⚡ <strong>Peak BD &gt;10%:</strong> ${alertasBd.map(d=>`${d.fecha} (${fmt(Math.round(d.bdKwh))} vs ${fmt(Math.round(d.prevBdKwh))} kWh)`).join(', ')}</div>`;
+  if(!alHtml) alHtml = `<div style="padding:8px 12px;border-radius:8px;font-size:12px;background:#f0fff4;color:#276749;border:1px solid #9ae6b4">🟢 Sin alertas en el período seleccionado.</div>`;
+
+  // Tendencia reactiva
+  if(diffs.length >= 3){
+    const ultTres = diffs.slice(-3);
+    if(ultTres.every((d,i,a)=>i===0||d.difReac>=a[i-1].difReac))
+      alHtml += `<div style="padding:8px 12px;border-radius:8px;font-size:12px;margin-top:6px;background:#fffbeb;color:#b7791f;border:1px solid #fbd38d">📈 <strong>Tendencia al alza:</strong> La diferencia reactiva ha subido 3 días consecutivos.</div>`;
+  }
+  g('an-alertas').innerHTML = alHtml;
+
+  // Gráfico consumo kWh diario (últimos 15)
+  const ult15diffs = [];
+  for(let i=1;i<ult15.length;i++){
+    ult15diffs.push({fecha:ult15[i].fecha, val:(ult15[i].kwh-ult15[i-1].kwh)*FACTOR});
+  }
+  dc('g-an-kwh');
+  if(ult15diffs.length && g('g-an-kwh')){
+    const lp1={id:'lp1',afterDatasetsDraw(chart){const ctx=chart.ctx;chart.getDatasetMeta(0).data.forEach((pt,i)=>{const v=ult15diffs[i].val;ctx.save();ctx.font='bold 9px Segoe UI';ctx.fillStyle='#2b6cb0';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(fmt(Math.round(v)),pt.x,pt.y-4);ctx.restore();});}};
+    ch['g-an-kwh']=new Chart(g('g-an-kwh').getContext('2d'),{type:'bar',
+      data:{labels:ult15diffs.map(d=>d.fecha.slice(5)),
+        datasets:[{data:ult15diffs.map(d=>Math.max(0,Math.round(d.val))),backgroundColor:'#2b6cb0',borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+        scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#718096',font:{size:10}},title:{display:true,text:'kWh',color:'#718096',font:{size:10}}},
+        x:{grid:{display:false},ticks:{color:'#718096',font:{size:10}}}}},
+      plugins:[lp1]});
+  }
+
+  // Gráfico peak BD kWh (últimos 15)
+  const ult15bd = ult15.map((l,i)=>({fecha:l.fecha, bdKwh:(l.bdKw||0)*FACTOR, prev:i>0?(ult15[i-1].bdKw||0)*FACTOR:null}));
+  dc('g-an-bd');
+  if(ult15bd.length && g('g-an-bd')){
+    const colors = ult15bd.map((d,i)=> i>0 && d.prev>0 && d.bdKwh > d.prev*1.1 ? '#c53030' : '#2b6cb0');
+    const lp2={id:'lp2',afterDatasetsDraw(chart){const ctx=chart.ctx;chart.getDatasetMeta(0).data.forEach((pt,i)=>{const v=ult15bd[i].bdKwh;if(!v)return;ctx.save();ctx.font='bold 9px Segoe UI';ctx.fillStyle=colors[i];ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(fmt(Math.round(v)),pt.x,pt.y-4);ctx.restore();});}};
+    ch['g-an-bd']=new Chart(g('g-an-bd').getContext('2d'),{type:'bar',
+      data:{labels:ult15bd.map(d=>d.fecha.slice(5)),
+        datasets:[{data:ult15bd.map(d=>Math.round(d.bdKwh)),backgroundColor:colors,borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+        scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#718096',font:{size:10}},title:{display:true,text:'kWh (×150)',color:'#718096',font:{size:10}}},
+        x:{grid:{display:false},ticks:{color:'#718096',font:{size:10}}}}},
+      plugins:[lp2]});
+  }
+
+  // Gráfico reactiva diaria
+  const reacDiffs = ult15.slice(1).map((l,i)=>({fecha:l.fecha, val:Math.abs(l.kvarh-(ult15[i].kvarh||0))}));
+  dc('g-an-reac');
+  if(reacDiffs.length && g('g-an-reac')){
+    const rColors = reacDiffs.map(d=>d.val>0.5?'#c53030':d.val>=0.3?'#b7791f':'#276749');
+    ch['g-an-reac']=new Chart(g('g-an-reac').getContext('2d'),{type:'bar',
+      data:{labels:reacDiffs.map(d=>d.fecha.slice(5)),
+        datasets:[
+          {data:reacDiffs.map(d=>+d.val.toFixed(3)),backgroundColor:rColors,borderRadius:4},
+          {type:'line',data:reacDiffs.map(()=>0.33),borderColor:'#b7791f',borderDash:[4,3],pointRadius:0,borderWidth:1.5},
+          {type:'line',data:reacDiffs.map(()=>0.5),borderColor:'#c53030',borderDash:[4,3],pointRadius:0,borderWidth:1.5}
+        ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+        scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#718096',font:{size:10}},title:{display:true,text:'kVArh',color:'#718096',font:{size:10}}},
+        x:{grid:{display:false},ticks:{color:'#718096',font:{size:10}}}}}}); 
+  }
+
+  // Tabla detalle
+  const semaforo = v => v>0.5?'<span style="color:#c53030;font-weight:700">🔴 Crítico</span>':v>=0.3?'<span style="color:#b7791f;font-weight:700">🟡 Alerta</span>':'<span style="color:#276749;font-weight:700">🟢 Normal</span>';
+  g('an-tbody').innerHTML = lista.map((l,i)=>{
+    if(i===0) return `<tr><td style="font-weight:600">${l.fecha}</td><td>${fmt(l.kwh)}</td><td>—</td><td>${fmt(l.kvarh)}</td><td>—</td><td>—</td><td>${(l.bdKw||0).toFixed(4)}</td><td>—</td><td>—</td></tr>`;
+    const prev = lista[i-1];
+    const difKwh = (l.kwh - prev.kwh)*FACTOR;
+    const difReac = Math.abs(l.kvarh - prev.kvarh);
+    const bdKwh = (l.bdKw||0)*FACTOR;
+    const prevBdKwh = (prev.bdKw||0)*FACTOR;
+    const peakAlert = prevBdKwh>0 && bdKwh>prevBdKwh*1.1;
+    return `<tr>
+      <td style="font-weight:600">${l.fecha}</td>
+      <td>${fmt(l.kwh)}</td>
+      <td style="font-weight:600;color:#2b6cb0">${fmt(Math.round(difKwh))}</td>
+      <td>${fmt(l.kvarh)}</td>
+      <td style="font-weight:600;color:${difReac>0.5?'#c53030':difReac>=0.3?'#b7791f':'#276749'}">${difReac.toFixed(3)}</td>
+      <td>${semaforo(difReac)}</td>
+      <td>${(l.bdKw||0).toFixed(4)}</td>
+      <td style="font-weight:600;color:${peakAlert?'#c53030':'#1a202c'}">${fmt(Math.round(bdKwh))}</td>
+      <td>${peakAlert?'<span style="color:#c53030;font-weight:700">⚡ +10%</span>':'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── PROYECCIÓN HP ARRASTRE ────────────────────────────────────────────────────
+const MESES_F=['Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic','Ene','Feb','Mar'];
+const MESES_IDX=[4,5,6,7,8,9,10,11,12,1,2,3];
+const FEST_EST={1:1.02,2:0.96,3:1.00,4:0.98,5:1.00,6:1.10,7:1.08,8:0.95,9:0.95,10:1.02,11:1.03,12:1.00};
+let escFactor=0;
+
+function linReg(xs,ys){
+  const n=xs.length,sx=xs.reduce((a,b)=>a+b,0),sy=ys.reduce((a,b)=>a+b,0);
+  const sxy=xs.reduce((a,x,i)=>a+x*ys[i],0),sxx=xs.reduce((a,x)=>a+x*x,0);
+  const m=(n*sxy-sx*sy)/(n*sxx-sx*sx); return{m,b:(sy-m*sx)/n};
+}
+function movAvg(arr,w){return arr.map((_,i)=>i<w-1?null:arr.slice(i-w+1,i+1).reduce((a,b)=>a+b,0)/w);}
+
+function updateEsc(v){
+  escFactor=parseFloat(v);
+  const map={'-1':'Muy optimista','-0.5':'Optimista','0':'Base','0.5':'Conservador','1':'Pesimista'};
+  const k=Object.keys(map).reduce((a,b)=>Math.abs(b-v)<Math.abs(a-v)?b:a);
+  if(g('esc-lbl'))g('esc-lbl').textContent=map[k]||'Base';
+  renderProy();
+}
+
+function renderProy(){
+  const empty=g('proy-empty'),body=g('proy-body');
+  if(!g('proy-empty'))return;
+  if(facturas.length<2){empty.style.display='block';body.style.display='none';return;}
+  empty.style.display='none';body.style.display='block';
+  const sorted=[...facturas].sort((a,b)=>a.fechaEm.localeCompare(b.fechaEm));
+  const ddas=sorted.map(f=>f.ddaHp||0);
+  const xs=ddas.map((_,i)=>i);
+  const reg=linReg(xs,ddas);
+  const ma=movAvg(ddas,Math.min(3,ddas.length));
+  const lastMA=ma[ma.length-1]||ddas[ddas.length-1];
+  const prom=ddas.reduce((a,b)=>a+b,0)/ddas.length;
+  const std=Math.sqrt(ddas.reduce((a,v)=>a+Math.pow(v-prom,2),0)/ddas.length);
+  const proj=MESES_IDX.map((mi,i)=>{
+    const xf=ddas.length+i;const base=(reg.m*xf+reg.b)*0.5+lastMA*0.5;
+    const aj=base*(FEST_EST[mi]||1)*(1-escFactor*0.08);const conf=std*(1+i*0.05);
+    return{label:MESES_F[i],val:Math.max(30,+aj.toFixed(2)),min:Math.max(25,+(aj-conf).toFixed(2)),max:+(aj+conf).toFixed(2),costo:Math.round(aj*10700),mi};
+  });
+  const maxP=Math.max(...proj.map(p=>p.val)),minP=Math.min(...proj.map(p=>p.val));
+  const promP=proj.reduce((s,p)=>s+p.val,0)/proj.length;
+  const totCosto=proj.reduce((s,p)=>s+p.costo,0);
+  g('proy-met').innerHTML=`
+    <div class="metric"><div class="metric-label">HP proy. promedio</div><div class="metric-val">${promP.toFixed(1)}</div><div class="metric-unit">kW/mes</div></div>
+    <div class="metric"><div class="metric-label">HP máx proyectada</div><div class="metric-val">${maxP.toFixed(1)}</div><div class="metric-unit">kW</div></div>
+    <div class="metric"><div class="metric-label">HP mín proyectada</div><div class="metric-val">${minP.toFixed(1)}</div><div class="metric-unit">kW</div></div>
+    <div class="metric"><div class="metric-label">Costo arrastre anual est.</div><div class="metric-val" style="font-size:13px">$${(totCosto/1000000).toFixed(2)}M</div><div class="metric-unit">CLP proyectado</div></div>
+    <div class="metric"><div class="metric-label">Promedio histórico</div><div class="metric-val">${prom.toFixed(1)}</div><div class="metric-unit">kW referencia</div></div>`;
+  const histLbls=sorted.map(f=>f.fechaEm?f.fechaEm.slice(0,7):'?');
+  const allLbls=[...histLbls,...proj.map(p=>p.label)];
+  const histKw=[...ddas,...Array(12).fill(null)];
+  const projKw=[...Array(ddas.length-1).fill(null),ddas[ddas.length-1],...proj.map(p=>p.val)];
+  const projMin=[...Array(ddas.length-1).fill(null),ddas[ddas.length-1],...proj.map(p=>p.min)];
+  const projMax=[...Array(ddas.length-1).fill(null),ddas[ddas.length-1],...proj.map(p=>p.max)];
+  dc('p-kw');
+  if(g('p-kw')){
+    const kwLbl={id:'kwlbl',afterDatasetsDraw(chart){const ctx=chart.ctx;[[3,'#2b6cb0',ddas.length],[2,'#c05621',ddas.length]].forEach(([di,col,thr])=>{const meta=chart.getDatasetMeta(di),ds=chart.data.datasets[di];meta.data.forEach((pt,i)=>{const v=ds.data[i];if(v===null)return;if(di===3&&i>=thr)return;if(di===2&&i<thr-1)return;ctx.save();ctx.font='bold 9px Segoe UI';ctx.fillStyle=col;ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(v,pt.x,pt.y-4);ctx.restore();});});} };
+    ch['p-kw']=new Chart(g('p-kw').getContext('2d'),{type:'line',
+      data:{labels:allLbls,datasets:[
+        {data:projMax,borderColor:'transparent',backgroundColor:'rgba(192,86,33,.1)',pointRadius:0,fill:'+1',tension:0,order:5},
+        {data:projMin,borderColor:'transparent',backgroundColor:'rgba(192,86,33,.1)',pointRadius:0,fill:false,tension:0,order:6},
+        {data:projKw,borderColor:'#c05621',backgroundColor:'transparent',borderDash:[6,4],pointBackgroundColor:'#c05621',pointRadius:allLbls.map((_,i)=>i>=ddas.length?4:0),tension:0,borderWidth:2,order:2},
+        {data:histKw,borderColor:'#2b6cb0',backgroundColor:'transparent',pointBackgroundColor:'#2b6cb0',pointRadius:5,tension:0,borderWidth:2.5,order:1},
+        {data:allLbls.map(()=>prom),borderColor:'rgba(128,128,128,.4)',borderDash:[3,3],pointRadius:0,tension:0,borderWidth:1,order:3}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
+        scales:{y:{beginAtZero:false,grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#718096',font:{size:10}},title:{display:true,text:'kW',color:'#718096',font:{size:10}}},
+        x:{grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#718096',font:{size:10},maxRotation:45}}}},
+      plugins:[kwLbl]});
+  }
+  const histClp=[...sorted.map(f=>f.cDdaHp),...Array(12).fill(null)];
+  const projClp=[...Array(ddas.length-1).fill(null),sorted[ddas.length-1].cDdaHp,...proj.map(p=>p.costo)];
+  dc('p-clp');
+  if(g('p-clp')){
+    ch['p-clp']=new Chart(g('p-clp').getContext('2d'),{type:'line',
+      data:{labels:allLbls,datasets:[
+        {data:histClp,borderColor:'#2b6cb0',backgroundColor:'rgba(43,108,176,.07)',pointBackgroundColor:'#2b6cb0',pointRadius:5,tension:0,fill:true,borderWidth:2.5},
+        {data:projClp,borderColor:'#c05621',backgroundColor:'rgba(192,86,33,.07)',borderDash:[6,4],pointBackgroundColor:'#c05621',pointRadius:allLbls.map((_,i)=>i>=ddas.length?4:0),fill:false,tension:0,borderWidth:2}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
+        scales:{y:{beginAtZero:false,grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#718096',font:{size:10},callback:v=>v>=1000000?(v/1000000).toFixed(1)+'M':(v/1000).toFixed(0)+'k'},title:{display:true,text:'CLP',color:'#718096',font:{size:10}}},
+        x:{grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#718096',font:{size:10},maxRotation:45}}}}});
+  }
+  const mesesAltos=proj.filter(p=>p.val>prom+std),mesesBajos=proj.filter(p=>p.val<prom-std*0.5);
+  let ins='';
+  if(Math.abs(reg.m)<0.1) ins+=`<div style="padding:9px 12px;border-radius:8px;font-size:12px;margin-bottom:8px;background:#f0fff4;color:#276749;border-left:3px solid #276749">Tendencia <strong>estable</strong>: la demanda HP no muestra incremento sostenido.</div>`;
+  else if(reg.m>0) ins+=`<div style="padding:9px 12px;border-radius:8px;font-size:12px;margin-bottom:8px;background:#fffbeb;color:#b7791f;border-left:3px solid #b7791f">Tendencia <strong>al alza</strong> (+${reg.m.toFixed(2)} kW/período). Evalúe desplazar cargas fuera del horario punta.</div>`;
+  else ins+=`<div style="padding:9px 12px;border-radius:8px;font-size:12px;margin-bottom:8px;background:#f0fff4;color:#276749;border-left:3px solid #276749">Tendencia <strong>a la baja</strong> (${reg.m.toFixed(2)} kW/período). Favorable para reducir cargo por arrastre.</div>`;
+  if(mesesAltos.length) ins+=`<div style="padding:9px 12px;border-radius:8px;font-size:12px;margin-bottom:8px;background:#fff5f5;color:#c53030;border-left:3px solid #c53030"><strong>Meses de riesgo alto:</strong> ${mesesAltos.map(p=>p.label).join(', ')}. HP proyectada supera el promedio histórico en más de 1 desviación estándar.</div>`;
+  if(mesesBajos.length) ins+=`<div style="padding:9px 12px;border-radius:8px;font-size:12px;margin-bottom:8px;background:#f0fff4;color:#276749;border-left:3px solid #276749"><strong>Meses favorables:</strong> ${mesesBajos.map(p=>p.label).join(', ')}. Menor demanda HP esperada.</div>`;
+  ins+=`<div style="padding:9px 12px;border-radius:8px;font-size:12px;margin-bottom:8px;background:#ebf8ff;color:#2b6cb0;border-left:3px solid #2b6cb0">Costo arrastre HP anual proyectado: <strong>$${(totCosto/1000000).toFixed(2)}M CLP</strong>. Mantener HP bajo ${(prom*0.9).toFixed(1)} kW generaría un ahorro de <strong>$${((totCosto*0.1)/1000000).toFixed(2)}M</strong> anuales.</div>`;
+  if(g('proy-insights'))g('proy-insights').innerHTML=ins;
+  const badge=v=>v>prom+std?'<span style="color:#c53030;font-weight:700">Alto</span>':v>prom?'<span style="color:#b7791f;font-weight:700">Medio</span>':'<span style="color:#276749;font-weight:700">Bajo</span>';
+  if(g('proy-tbl'))g('proy-tbl').innerHTML=proj.map(p=>{const d=((p.val-prom)/prom*100);return`<tr>
+    <td style="font-weight:600;text-align:left">${p.label}</td>
+    <td style="font-weight:600">${p.val.toFixed(2)}</td>
+    <td style="color:#718096">${p.min.toFixed(2)}</td><td style="color:#718096">${p.max.toFixed(2)}</td>
+    <td>${fclp(p.costo)}</td>
+    <td style="color:${d>10?'#c53030':d<-5?'#276749':'#1a202c'}">${d>=0?'+':''}${d.toFixed(1)}%</td>
+    <td>${badge(p.val)}</td>
+  </tr>`;}).join('');
+}
+
+
+// ── CARGA EXCEL OPERADOR ──────────────────────────────────────────────────────
+let xlFilas = []; // filas leídas del Excel
+let xlNuevas = []; // filas que no existen aún en Sheets
+
+function xlOver(e){e.preventDefault();g('xl-dz').classList.add('over');}
+function xlLeave(){g('xl-dz').classList.remove('over');}
+function xlDrop(e){e.preventDefault();xlLeave();const f=e.dataTransfer.files[0];if(f)handleExcel(f);else alert('Seleccione un archivo Excel.');}
+
+function clearExcel(){
+  xlFilas=[];xlNuevas=[];
+  if(g('xl-preview'))g('xl-preview').style.display='none';
+  if(g('xl-status'))g('xl-status').innerHTML='';
+  if(g('xl-inp'))g('xl-inp').value='';
+  if(g('xl-dz'))g('xl-dz').classList.remove('over');
+}
+
+async function handleExcel(file){
+  if(!file)return;
+  const ext=file.name.split('.').pop().toLowerCase();
+  if(!['xlsx','xls'].includes(ext)){alert('Solo se aceptan archivos .xlsx o .xls');return;}
+  g('xl-status').innerHTML='<div class="alert-info">Leyendo Excel...</div>';
+
+  try{
+    // Usar SheetJS via CDN
+    if(!window.XLSX){
+      await new Promise((res,rej)=>{
+        const s=document.createElement('script');
+        s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+        s.onload=res;s.onerror=rej;document.head.appendChild(s);
+      });
+    }
+
+    const ab=await file.arrayBuffer();
+    const wb=XLSX.read(ab,{type:'array',cellDates:true});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+
+    // Detectar fila de encabezado — buscar la que tenga "Fecha" o "FECHA"
+    let headerRow=-1;
+    for(let i=0;i<Math.min(raw.length,10);i++){
+      const row=raw[i].map(c=>String(c).toLowerCase());
+      if(row.some(c=>c.includes('fecha') && c.includes('medi'))){headerRow=i;break;}
+    }
+    if(headerRow===-1){
+      // Si no encontramos encabezado exacto, buscar cualquier fila con "fecha"
+      for(let i=0;i<Math.min(raw.length,10);i++){
+        if(raw[i].some(c=>String(c).toLowerCase().includes('fecha'))){headerRow=i;break;}
+      }
+    }
+    if(headerRow===-1){g('xl-status').innerHTML='<div class="alert-warn">No se encontró el encabezado de la planilla. Verifique que sea el formato correcto.</div>';return;}
+
+    const headers=raw[headerRow].map(c=>String(c).toLowerCase().trim());
+    const dataRows=raw.slice(headerRow+1).filter(r=>r.some(c=>c!==''));
+
+    // Mapear columnas por nombre (flexible)
+    function findCol(keywords){
+      for(const kw of keywords){
+        const idx=headers.findIndex(h=>h.includes(kw));
+        if(idx>=0)return idx;
+      }
+      return -1;
+    }
+
+    const cols={
+      fecha:    findCol(['fecha med']),
+      horaReal: findCol(['hora real']),
+      horaMed:  findCol(['hora med','hora
+med']),
+      fechaMed: findCol(['fecha
+med','fecha med']),
+      kwh:      findCol(['kwh','energía [kwh]','energia']),
+      kvarh:    findCol(['kvarh','react','kvarh']),
+      bdKw:     findCol(['demanda bd','bd [kw]','bd
+']),
+      horaBd:   findCol(['hora dda bd','hora dda
+bd']),
+      fechaBd:  findCol(['fecha dda bd','fecha dda
+bd']),
+      hpKw:     findCol(['demanda hp','hp [kw]','hp
+']),
+      horaHp:   findCol(['hora dda hp','hora dda
+hp']),
+      fechaHp:  findCol(['fecha dda hp','fecha dda
+hp']),
+      codReset: findCol(['código reset','codigo reset','reset']),
+      horaReset:findCol(['hora reset']),
+      fechaReset:findCol(['fecha reset']),
+    };
+
+    // Si fecha no encontrada, tomar primera columna
+    if(cols.fecha<0)cols.fecha=0;
+    if(cols.kwh<0){
+      // buscar columna con números grandes (>1000)
+      for(let c=0;c<headers.length;c++){
+        const vals=dataRows.map(r=>parseFloat(r[c])||0).filter(v=>v>1000);
+        if(vals.length>dataRows.length*0.5){cols.kwh=c;break;}
+      }
+    }
+
+    // Parsear fecha desde Excel (puede venir como Date, string DD-MM-YY, etc.)
+    function parseFechaExcel(v){
+      if(!v)return'';
+      if(v instanceof Date){
+        const d=v;
+        return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      }
+      const s=String(v).trim();
+      // DD-MM-YY o DD-MM-YYYY o DD/MM/YY
+      const m=s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})$/);
+      if(m){
+        const dd=m[1].padStart(2,'0'),mm=m[2].padStart(2,'0');
+        let yy=m[3];if(yy.length===2)yy='20'+yy;
+        return`${yy}-${mm}-${dd}`;
+      }
+      return s;
+    }
+
+    function getVal(row,idx){return idx>=0&&idx<row.length?row[idx]:'';}
+    function getNum(row,idx){return idx>=0?parseFloat(row[idx])||0:0;}
+
+    xlFilas=dataRows.map(row=>({
+      fecha:    parseFechaExcel(getVal(row,cols.fecha)),
+      horaReal: String(getVal(row,cols.horaReal)||''),
+      horaMed:  String(getVal(row,cols.horaMed)||''),
+      fechaMed: parseFechaExcel(getVal(row,cols.fechaMed)),
+      kwh:      getNum(row,cols.kwh),
+      kvarh:    getNum(row,cols.kvarh),
+      bdKw:     getNum(row,cols.bdKw),
+      bdHora:   String(getVal(row,cols.horaBd)||''),
+      bdFecha:  parseFechaExcel(getVal(row,cols.fechaBd)),
+      hpKw:     getNum(row,cols.hpKw),
+      hpHora:   String(getVal(row,cols.horaHp)||''),
+      hpFecha:  parseFechaExcel(getVal(row,cols.fechaHp)),
+      resetCod: String(getVal(row,cols.codReset)||''),
+      resetHora:String(getVal(row,cols.horaReset)||''),
+      resetFecha:String(getVal(row,cols.fechaReset)||''),
+      oper:     userName,
+      obs:      '',
+      id:       ''
+    })).filter(r=>r.fecha&&r.kwh>0);
+
+    // Comparar con lo que ya está en Sheets (por fecha)
+    const fechasExistentes=new Set(lecturas.map(l=>l.fecha));
+    xlNuevas=xlFilas.filter(r=>!fechasExistentes.has(r.fecha));
+
+    // Mostrar preview
+    g('xl-status').innerHTML='';
+    g('xl-title').textContent=`${file.name} — ${xlFilas.length} registros detectados`;
+    g('xl-badge').textContent=`${xlNuevas.length} nuevos / ${xlFilas.length-xlNuevas.length} ya registrados`;
+    g('xl-badge').className='badge '+(xlNuevas.length>0?'b-green':'b-gray');
+
+    g('xl-summary').innerHTML=`
+      <div class="alert-${xlNuevas.length>0?'ok':'info'}" style="margin-bottom:0">
+        ${xlNuevas.length>0
+          ?`✓ Se agregarán <strong>${xlNuevas.length}</strong> filas nuevas a Google Sheets. ${xlFilas.length-xlNuevas.length} ya existen y serán ignoradas.`
+          :'Todas las filas de este Excel ya están registradas en Google Sheets. No hay nada nuevo que agregar.'}
+      </div>`;
+
+    g('xl-btn-subir').style.display=xlNuevas.length>0?'inline-block':'none';
+
+    // Renderizar tabla preview
+    g('xl-tbody').innerHTML=xlFilas.map((r,i,arr)=>{
+      const esNueva=!fechasExistentes.has(r.fecha);
+      const prev=i>0?arr[i-1]:null;
+      // Consumo kWh = diferencia con anterior × 150
+      const consumo=prev?Math.round((r.kwh-prev.kwh)*150):null;
+      // Peak HP alert: sube más de 10% respecto al anterior
+      const hpKwh=Math.round(r.hpKw*150);
+      const prevHpKwh=prev?Math.round(prev.hpKw*150):null;
+      const peakAlert=prevHpKwh&&prevHpKwh>0&&hpKwh>prevHpKwh*1.1;
+      const bdKwh=Math.round(r.bdKw*150);
+      return\`<tr style="\${esNueva?'':'opacity:.45'}">
+        <td style="font-weight:600;color:\${esNueva?'#276749':'#718096'}">\${r.fecha}\${esNueva?' <span style="font-size:9px;color:#276749">★</span>':''}</td>
+        <td>\${r.horaReal||'—'}</td><td>\${r.horaMed||'—'}</td>
+        <td style="color:#718096">\${fmt(r.kwh)}</td>
+        <td style="font-weight:700;color:#2b6cb0">\${consumo!==null?fmt(consumo)+'&nbsp;kWh':'—'}</td>
+        <td>\${fmt(r.kvarh)}</td>
+        <td>\${r.bdKw||'0'}</td>
+        <td>\${fmt(bdKwh)}</td>
+        <td style="color:\${peakAlert?'#c53030':'#1a202c'}">\${r.hpKw||'0'}</td>
+        <td style="font-weight:\${peakAlert?'700':'400'};color:\${peakAlert?'#c53030':'#1a202c'}">\${fmt(hpKwh)}\${peakAlert?' ⚡':''}</td>
+        <td>\${r.resetCod||'—'}</td>
+        <td>\${esNueva?'<span class="badge b-green">Nuevo</span>':'<span class="badge b-gray">Ya existe</span>'}</td>
+      </tr>\`;
+    }).join('');
+
+    g('xl-preview').style.display='block';
+
+  }catch(err){
+    console.error(err);
+    g('xl-status').innerHTML='<div class="alert-warn">Error al leer el Excel: '+err.message+'. Verifique que sea un archivo .xlsx válido.</div>';
+  }
+}
+
+async function subirExcel(){
+  if(!xlNuevas.length){alert('No hay filas nuevas para subir.');return;}
+  setSync('op-sync','ing','Subiendo '+xlNuevas.length+' filas...');
+  g('xl-btn-subir').disabled=true;
+  g('xl-btn-subir').textContent='Subiendo...';
+  let subidas=0,errores=0;
+  for(const r of xlNuevas){
+    const id=Date.now().toString()+'_'+Math.random().toString(36).slice(2,6);
+    const fila=[r.fecha,r.horaReal,r.horaMed,r.fechaMed,r.kwh,r.kvarh,
+      r.bdKw,r.bdHora,r.bdFecha,r.hpKw,r.hpHora,r.hpFecha,
+      r.resetCod,r.resetHora,r.resetFecha,r.oper||userName,r.obs,id];
+    const ok=await sheetAppend(SH_LEC,fila);
+    if(ok){
+      subidas++;
+      lecturas.push({...r,id});
+    }else errores++;
+    // Pequeña pausa para no saturar la API
+    await new Promise(res=>setTimeout(res,200));
+  }
+  setSync('op-sync',errores>0?'err':'ok',subidas+' filas subidas ✓');
+  g('xl-btn-subir').disabled=false;
+  g('xl-btn-subir').textContent='Subir filas nuevas a Google Sheets';
+  xlNuevas=[];
+  renderOpHist();
+  alert('✓ '+subidas+' filas nuevas subidas a Google Sheets.'+
+    (errores>0?' '+errores+' filas con error.':''));
+  if(!errores)clearExcel();
+}
+
+</script>
+</body>
+</html>
