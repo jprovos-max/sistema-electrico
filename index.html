@@ -1817,7 +1817,7 @@ hp']),
       const prevHpKwh=prev?Math.round(prev.hpKw*150):null;
       const peakAlert=prevHpKwh&&prevHpKwh>0&&hpKwh>prevHpKwh*1.1;
       const bdKwh=Math.round(r.bdKw*150);
-      return\`<tr style="\${esNueva?'':'opacity:.45'}">
+      return`<tr style="\${esNueva?'':'opacity:.45'}">
         <td style="font-weight:600;color:\${esNueva?'#276749':'#718096'}">\${r.fecha}\${esNueva?' <span style="font-size:9px;color:#276749">★</span>':''}</td>
         <td>\${r.horaReal||'—'}</td><td>\${r.horaMed||'—'}</td>
         <td style="color:#718096">\${fmt(r.kwh)}</td>
@@ -1829,7 +1829,7 @@ hp']),
         <td style="font-weight:\${peakAlert?'700':'400'};color:\${peakAlert?'#c53030':'#1a202c'}">\${fmt(hpKwh)}\${peakAlert?' ⚡':''}</td>
         <td>\${r.resetCod||'—'}</td>
         <td>\${esNueva?'<span class="badge b-green">Nuevo</span>':'<span class="badge b-gray">Ya existe</span>'}</td>
-      </tr>\`;
+      </tr>`;
     }).join('');
 
     g('xl-preview').style.display='block';
