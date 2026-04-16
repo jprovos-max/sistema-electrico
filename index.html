@@ -361,7 +361,8 @@ input[readonly]{background:#f7fafc;color:#718096}
       <div id="fac-prev" style="margin:8px 0"></div>
       <div class="fg"><label>Observaciones</label><textarea id="p-obs" rows="2"></textarea></div>
       <div class="btn-row">
-        <button class="btn btn-g" onclick="guardarFactura()">Guardar en Google Sheets</button>
+        <button class="btn btn-g" onclick="guardarFactura(false)" id="btn-guardar">Guardar en Google Sheets</button>
+        <button class="btn btn-g" onclick="guardarFactura(true)" id="btn-guardar-sig" style="display:none">Guardar y continuar →</button>
         <button class="btn" onclick="clearFacForm()">Limpiar</button>
       </div>
     </div>
@@ -519,6 +520,7 @@ const API='https://sheets.googleapis.com/v4/spreadsheets';
 const SH_LEC='Lecturas',SH_FAC='Facturas';
 
 const USUARIOS={
+  'jprovos@gmail.com':    {perfil:'adm', nombre:'J. Provoste'},
   'p.lavin@udt.cl':    {perfil:'op',  nombre:'P. Lavín'},
   'j.provoste@udt.cl': {perfil:'adm', nombre:'J. Provoste'},
   's.vergara@udt.cl':  {perfil:'adm', nombre:'S. Vergara'},
@@ -884,6 +886,11 @@ function cargarEnForm(idx){
   g('btn-prev').style.display=multi?'inline-block':'none';
   g('btn-next').style.display=multi?'inline-block':'none';
   if(multi){g('btn-prev').disabled=idx===0;g('btn-next').disabled=idx===pendingPDFs.length-1;}
+  // Mostrar botón correcto según si hay más facturas pendientes
+  const hayMas=idx<pendingPDFs.length-1;
+  if(g('btn-guardar'))g('btn-guardar').style.display=hayMas?'none':'inline-block';
+  if(g('btn-guardar-sig'))g('btn-guardar-sig').style.display=hayMas?'inline-block':'none';
+  if(g('btn-guardar-sig'))g('btn-guardar-sig').textContent=`Guardar y continuar → (${idx+1}/${pendingPDFs.length})`;
   sv('p-num',r.num,!r.num);sv('p-fem',r.fechaEm,!r.fechaEm);
   sv('p-des',r.desde,!r.desde);sv('p-has',r.hasta,!r.hasta);sv('p-ven',r.fechaVen||'');
   sv('p-kwh',r.kwh||'',!r.kwh);sv('p-adms',r.admServ||'');sv('p-trp',r.transp||'');
@@ -909,8 +916,12 @@ function recalcFac(){
   g('fac-prev').innerHTML=tot>0?`<div class="ftotal"><span style="font-size:12px;color:#718096">Total + valor administrativo</span><span style="font-size:16px;font-weight:700;color:#1a202c">${fclp(tot+Math.round(adm))}</span></div>`:'';
 }
 
-async function guardarFactura(){
+async function guardarFactura(continuar=false){
   if(!gv('p-num')||!parseFloat(gv('p-tot'))){alert('N° factura y total son obligatorios.');return;}
+  // Verificar duplicado
+  const numActual=gv('p-num').trim();
+  const dup=facturas.find(f=>f.num&&f.num.trim()===numActual);
+  if(dup&&!confirm(`La factura N° ${numActual} ya existe. ¿Guardar de todas formas?`))return;
   setSync('adm-sync','ing','Guardando...');
   const tot=parseFloat(gv('p-tot'))||0,kwh=parseFloat(gv('p-kwh'))||0;
   const tipo=gv('adm-tipo'),val=parseFloat(gv('adm-val'))||0;
@@ -927,10 +938,22 @@ async function guardarFactura(){
   const ok=await sheetAppend(SH_FAC,fila);
   if(ok){
     setSync('adm-sync','ok','Guardado ✓');
+    // Marcar como guardada en la cola
+    if(pendingPDFs[currentPDFIdx])pendingPDFs[currentPDFIdx]._guardada=true;
+    const st=g(`ps-${currentPDFIdx}`);
+    if(st){st.className='status-ok';st.textContent='✓ Guardada';}
     facturas.push({num:fila[0],fechaEm:fila[1],desde:fila[2],hasta:fila[3],estado:fila[4],kwh:fila[5],kvarh:fila[6],ddaMax:fila[7],ddaHp:fila[8],admServ:fila[9],transp:fila[10],csp:fila[11],fest:fila[12],elec:fila[13],arr:fila[14],cDdaMax:fila[15],cDdaHp:fila[16],ajAnt:fila[17],ajAct:fila[18],iva:fila[19],exento:fila[20],neto:fila[21],total:fila[22],admValor:fila[23],totalConAdm:fila[24],obs:fila[25],id});
-    clearFacForm();renderFacList();renderCosto();renderGraf();
-    alert('✓ Factura guardada correctamente.');
-  }else{setSync('adm-sync','err','Error');alert('Error al guardar. Verifique conexión y permisos en la hoja de Google Sheets.');}
+    renderFacList();renderCosto();renderGraf();
+    if(continuar&&currentPDFIdx<pendingPDFs.length-1){
+      // Avanzar automáticamente a la siguiente
+      cargarEnForm(currentPDFIdx+1);
+    } else {
+      const guardadas=pendingPDFs.filter(p=>p._guardada).length;
+      const total=pendingPDFs.length;
+      clearFacForm();
+      alert(`✓ ${guardadas} de ${total} factura(s) guardada(s) correctamente.`);
+    }
+  }else{setSync('adm-sync','err','Error');alert('Error al guardar. Verifique conexión y permisos en Google Sheets.');}
 }
 
 function clearFacForm(){g('form-fac').style.display='none';g('fac-alert').innerHTML='';g('fac-prev').innerHTML='';g('pdf-inp').value='';}
